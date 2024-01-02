@@ -5,9 +5,11 @@ namespace KoenVanMeijeren\SpreadsheetReader;
 use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
 
 /**
- * Class for parsing XLS files.
+ * Spreadsheet reader for XLS files.
+ *
+ * @internal This class is not meant to be used directly. Use SpreadsheetReader.
  */
-class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
+final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
 
   /**
    * File handle.

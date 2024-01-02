@@ -3,7 +3,9 @@
 namespace KoenVanMeijeren\SpreadsheetReader;
 
 /**
- * Class for parsing XLSX files specifically.
+ * Spreadsheet reader for XLSX files.
+ *
+ * @internal This class is not meant to be used directly. Use SpreadsheetReader.
  */
 class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
   public const CELL_TYPE_BOOL = 'b';

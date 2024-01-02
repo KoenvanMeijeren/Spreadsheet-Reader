@@ -2,6 +2,8 @@
 
 namespace KoenVanMeijeren\SpreadsheetReader;
 
+use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
+
 /**
  * Main class for spreadsheet reading.
  */
@@ -27,7 +29,7 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
   /**
    * Handler for the file.
    */
-  private ?SpreadsheetReaderInterface $handler = NULL;
+  private SpreadsheetReaderInterface $handler;
 
   /**
    * Type of the contained spreadsheet.
@@ -48,25 +50,31 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
    */
   public function __construct(string $filepath, ?string $originalFilename = NULL, ?string $mimeType = NULL) {
     if (!is_readable($filepath)) {
-      throw new \RuntimeException('KoenVanMeijeren\SpreadsheetReader\SpreadsheetReader: File (' . $filepath . ') not readable');
+      throw new FileNotReadableException($filepath);
     }
 
-    $defaultTimezone = date_default_timezone_get();
-    if ($defaultTimezone) {
-      date_default_timezone_set($defaultTimezone);
-    }
+    $this->determineAndSetFileType($filepath, $originalFilename, $mimeType);
 
-    // Checking the other parameters for correctness
-    // This should be a check for string, but we're lenient.
-    if (!empty($originalFilename) && !is_scalar($originalFilename)) {
-      throw new \RuntimeException('KoenVanMeijeren\SpreadsheetReader\SpreadsheetReader: Original file (2nd parameter) path is not a string or a scalar value.');
-    }
+    $this->handler = match ($this->type) {
+      self::TYPE_XLSX => new SpreadsheetReaderXLSX($filepath),
+      self::TYPE_CSV => new SpreadsheetReaderCSV($filepath, $this->options),
+      self::TYPE_XLS => new SpreadsheetReaderXLS($filepath),
+      self::TYPE_ODS => new SpreadsheetReaderODS($filepath, $this->options),
+      default => throw new \RuntimeException('No handler available for the given type: ' . $this->type),
+    };
+  }
 
-    if (!empty($mimeType) && !is_scalar($mimeType)) {
-      throw new \RuntimeException('KoenVanMeijeren\SpreadsheetReader\SpreadsheetReader: Mime type (3nd parameter) path is not a string or a scalar value.');
-    }
+  /**
+   * Destructor, destroys all that remains (closes and deletes temp files).
+   */
+  public function __destruct() {
+    unset($this->options, $this->index, $this->handler, $this->type);
+  }
 
-    // 1. Determine type
+  /**
+   * Determines the type of the file and sets it.
+   */
+  private function determineAndSetFileType(string $filepath, ?string $originalFilename, ?string $mimeType): void {
     if (!$originalFilename) {
       $originalFilename = $filepath;
     }
@@ -90,11 +98,9 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
       case 'application/xlt':
       case 'application/x-xls':
         // Excel does weird stuff.
+        $this->type = self::TYPE_XLS;
         if (in_array($fileExtension, ['csv', 'tsv', 'txt'], TRUE)) {
           $this->type = self::TYPE_CSV;
-        }
-        else {
-          $this->type = self::TYPE_XLS;
         }
         break;
 
@@ -118,14 +124,14 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
     if (!$this->type) {
       $this->type = match ($fileExtension) {
         'xlsx', 'xltx', 'xlsm', 'xltm' => self::TYPE_XLSX,
-                'xls', 'xlt' => self::TYPE_XLS,
-                'ods', 'odt' => self::TYPE_ODS,
-                default => self::TYPE_CSV,
+        'xls', 'xlt' => self::TYPE_XLS,
+        'ods', 'odt' => self::TYPE_ODS,
+        default => self::TYPE_CSV,
       };
     }
 
     // Pre-checking XLS files, in case they are renamed CSV or XLSX files.
-    if ($this->type == self::TYPE_XLS) {
+    if ($this->type === self::TYPE_XLS) {
       $this->handler = new SpreadsheetReaderXLS($filepath);
       if (!$this->handler->valid()) {
         $this->handler->__destruct();
@@ -141,36 +147,6 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
         }
       }
     }
-
-    // 2. Create handler
-    switch ($this->type) {
-      case self::TYPE_XLSX:
-        $this->handler = new SpreadsheetReaderXLSX($filepath);
-        break;
-
-      case self::TYPE_CSV:
-        $this->handler = new SpreadsheetReaderCSV($filepath, $this->options);
-        break;
-
-      case self::TYPE_XLS:
-        // Everything already happens above.
-        break;
-
-      case self::TYPE_ODS:
-        $this->handler = new SpreadsheetReaderODS($filepath, $this->options);
-        break;
-
-      default:
-        throw new \RuntimeException('No handler available for the given type: ' . $this->type);
-    }
-
-  }
-
-  /**
-   * Destructor, destroys all that remains (closes and deletes temp files).
-   */
-  public function __destruct() {
-    unset($this->options, $this->index, $this->handler, $this->type);
   }
 
   /**
@@ -202,14 +178,14 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
    */
   public function rewind(): void {
     $this->index = 0;
-    $this->handler?->rewind();
+    $this->handler->rewind();
   }
 
   /**
    * {@inheritdoc}
    */
   public function current(): mixed {
-    return $this->handler?->current();
+    return $this->handler->current();
 
   }
 
@@ -217,20 +193,15 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
    * {@inheritdoc}
    */
   public function next(): void {
-    if (!$this->handler) {
-      return;
-    }
-
     $this->index++;
     $this->handler->next();
-
   }
 
   /**
    * {@inheritdoc}
    */
   public function key(): int {
-    return $this->handler?->key();
+    return $this->handler->key();
 
   }
 
@@ -238,26 +209,20 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
    * {@inheritdoc}
    */
   public function valid(): bool {
-    return $this->handler?->valid();
-
+    return $this->handler->valid();
   }
 
   /**
    * {@inheritdoc}
    */
   public function count(): int {
-    return (int) $this->handler?->count();
-
+    return $this->handler->count();
   }
 
   /**
    * {@inheritdoc}
    */
   public function seek(int $offset): void {
-    if (!$this->handler) {
-      throw new \OutOfBoundsException('KoenVanMeijeren\SpreadsheetReader\SpreadsheetReader: No file opened');
-    }
-
     $currentIndex = $this->handler->key();
     if ($currentIndex !== $offset) {
       if ($offset < $currentIndex || $currentIndex === NULL || $offset === 0) {
@@ -272,7 +237,6 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
         throw new \OutOfBoundsException('SpreadsheetError: Position ' . $offset . ' not found');
       }
     }
-
   }
 
 }

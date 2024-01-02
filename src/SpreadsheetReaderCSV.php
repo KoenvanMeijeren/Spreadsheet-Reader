@@ -5,9 +5,11 @@ namespace KoenVanMeijeren\SpreadsheetReader;
 use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
 
 /**
- * The SpreadsheetReaderCSV class provides a way to read CSV files.
+ * Spreadsheet reader for CSV files.
+ *
+ * @internal This class is not meant to be used directly. Use SpreadsheetReader.
  */
-class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
+final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
 
   /**
    * Options array, pre-populated with the default values.

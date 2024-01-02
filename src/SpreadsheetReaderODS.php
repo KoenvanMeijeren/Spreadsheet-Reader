@@ -3,9 +3,11 @@
 namespace KoenVanMeijeren\SpreadsheetReader;
 
 /**
- * Class for parsing ODS files.
+ * Spreadsheet reader for ODS files.
+ *
+ * @internal This class is not meant to be used directly. Use SpreadsheetReader.
  */
-class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
+final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
 
   /**
    * Path to temporary content file.
