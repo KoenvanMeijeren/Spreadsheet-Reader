@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace KoenVanMeijeren\SpreadsheetReader;
+namespace KoenVanMeijeren\SpreadsheetReader\Reader;
 
 /**
  * Provides an interface for SpreadsheetReaderInterface.
@@ -20,10 +20,14 @@ interface SpreadsheetReaderInterface extends \Iterator, \Countable {
   public function sheets(): array;
 
   /**
-   * Changes the current sheet in the file to another.
+   * Changes the current sheet to another from the file.
+   *
+   * Note that changing the sheet will rewind the file to the beginning, even if
+   * the current sheet index is provided.
    *
    * @return bool
-   *   True if a sheet was successfully changed, false otherwise.
+   *    True if sheet could be changed to the specified one,
+   *    false if not (for example, if incorrect index was provided).
    */
   public function changeSheet(int $index): bool;
 

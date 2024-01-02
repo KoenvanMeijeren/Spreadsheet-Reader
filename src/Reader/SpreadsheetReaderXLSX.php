@@ -1,19 +1,14 @@
 <?php
 
-namespace KoenVanMeijeren\SpreadsheetReader;
+namespace KoenVanMeijeren\SpreadsheetReader\Reader;
 
 /**
  * Spreadsheet reader for XLSX files.
  *
  * @internal This class is not meant to be used directly. Use SpreadsheetReader.
  */
-class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
-  public const CELL_TYPE_BOOL = 'b';
-  public const CELL_TYPE_NUMBER = 'n';
-  public const CELL_TYPE_ERROR = 'e';
+final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
   public const CELL_TYPE_SHARED_STR = 's';
-  public const CELL_TYPE_STR = 'str';
-  public const CELL_TYPE_INLINE_STR = 'inlineStr';
 
   /**
    * Number of shared strings that can be reasonably cached.

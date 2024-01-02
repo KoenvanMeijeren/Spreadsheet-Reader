@@ -1,6 +1,6 @@
 <?php
 
-namespace KoenVanMeijeren\SpreadsheetReader;
+namespace KoenVanMeijeren\SpreadsheetReader\Reader;
 
 use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
 

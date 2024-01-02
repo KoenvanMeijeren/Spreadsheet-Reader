@@ -5,11 +5,16 @@ namespace KoenVanMeijeren\SpreadsheetReader;
 use KoenVanMeijeren\SpreadsheetReader\Config\SpreadsheetReaderCSVConfig;
 use KoenVanMeijeren\SpreadsheetReader\Config\SpreadsheetReaderFileType;
 use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
+use KoenVanMeijeren\SpreadsheetReader\Reader\SpreadsheetReaderCSV;
+use KoenVanMeijeren\SpreadsheetReader\Reader\SpreadsheetReaderInterface;
+use KoenVanMeijeren\SpreadsheetReader\Reader\SpreadsheetReaderODS;
+use KoenVanMeijeren\SpreadsheetReader\Reader\SpreadsheetReaderXLS;
+use KoenVanMeijeren\SpreadsheetReader\Reader\SpreadsheetReaderXLSX;
 
 /**
  * Main class for spreadsheet reading.
  */
-class SpreadsheetReader implements \SeekableIterator, \Countable {
+class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInterface {
 
   /**
    * Handler for the file.
@@ -131,24 +136,14 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
   }
 
   /**
-   * Gets information about separate sheets in the given file.
-   *
-   * @return array
-   *   Associative array where key is sheet index and value is sheet name.
+   * {@inheritdoc}
    */
   public function sheets(): array {
     return $this->reader->sheets();
   }
 
   /**
-   * Changes the current sheet to another from the file.
-   *
-   * Note that changing the sheet will rewind the file to the beginning, even if
-   * the current sheet index is provided.
-   *
-   * @return bool
-   *   True if sheet could be changed to the specified one,
-   *   false if not (for example, if incorrect index was provided).
+   * {@inheritDoc}
    */
   public function changeSheet(int $index): bool {
     return $this->reader->changeSheet($index);
