@@ -10,8 +10,8 @@
 		"phpcbf": "vendor/bin/phpcbf -p -s --report=code,summary",
 		"phpcs": "vendor/bin/phpcs -p -s --report=code,summary",
 		"test": [
-            "phpcs",
-            "pest"
+            "composer run phpcs",
+            "composer run pest"
         ]
 	},
 	"require": {
