@@ -1,230 +1,207 @@
 <?php
+
 namespace KoenVanMeijeren\SpreadsheetReader;
 
-use RuntimeException;
-use Spreadsheet_Excel_Reader;
+use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
 
 /**
- * Class for parsing XLS files
- *
- * @version 1.0
- * @author KoenVanMeijeren
+ * Class for parsing XLS files.
  */
-class SpreadsheetReaderXLS implements SpreadsheetReaderInterface
-{
-    /**
-     * @var resource File handle
-     */
-    private mixed $inputFile = false;
+class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
 
-    private int $index = 0;
+  /**
+   * File handle.
+   */
+  private mixed $inputFile;
 
-    private bool $hasError = false;
+  /**
+   * Current row index.
+   */
+  private int $index = 0;
 
-    /**
-     * @var array Sheet information
-     */
-    private array $sheets = [];
-    private array $sheetIndexes = [];
+  /**
+   * Whether the file has an error.
+   */
+  private bool $hasError = FALSE;
 
-    /**
-     * @var int Current sheet index
-     */
-    private int $currentSheet = 0;
+  /**
+   * Sheet information.
+   */
+  private array $sheets = [];
 
-    /**
-     * @var array Content of the current row
-     */
-    private array $currentRow = [];
+  /**
+   * Sheet indexes.
+   */
+  private array $sheetIndexes = [];
 
-    /**
-     * @var int Row count in the sheet
-     */
-    private int $rowCount = 0;
+  /**
+   * Current sheet index.
+   */
+  private int $currentSheet = 0;
 
-    /**
-     * @var array Template to use for empty rows. Retrieved rows are merged
-     *    with this so that empty cells are added, too
-     */
-    private array $emptyRow = [];
+  /**
+   * Content of the current row.
+   */
+  private array $currentRow = [];
 
-    /**
-     * @param string $filepath Path to file
-     * @param array $options Options
-     */
-    public function __construct(string $filepath, array $options = [])
-    {
-        if (!is_readable($filepath)) {
-            throw new RuntimeException('File not readable (' . $filepath . ')');
-        }
+  /**
+   * Row count in the sheet.
+   */
+  private int $rowCount = 0;
 
-        if (!class_exists('Spreadsheet_Excel_Reader')) {
-            throw new RuntimeException('Spreadsheet_Excel_Reader class not available');
-        }
+  /**
+   * Template to use for empty rows.
+   *
+   * Retrieved rows are merged with this so that empty cells are added, too.
+   */
+  private array $emptyRow = [];
 
-        $this->inputFile = new Spreadsheet_Excel_Reader($filepath, false, 'UTF-8');
-
-        if (function_exists('mb_convert_encoding')) {
-            $this->inputFile->setUTFEncoder('mb');
-        }
-
-        if (empty($this->inputFile->sheets)) {
-            $this->hasError = true;
-            return;
-        }
-
-        $this->changeSheet(0);
+  /**
+   * Constructs a new object.
+   */
+  public function __construct(string $filepath) {
+    if (!is_readable($filepath)) {
+      throw new FileNotReadableException($filepath);
     }
 
-    public function __destruct()
-    {
-        unset($this->inputFile);
+    if (!class_exists('Spreadsheet_Excel_Reader')) {
+      throw new \RuntimeException('Spreadsheet_Excel_Reader class not available');
     }
 
-    /**
-     * Retrieves an array with information about sheets in the current file
-     *
-     * @return array List of sheets (key is sheet index, value is name)
-     */
-    public function sheets(): array
-    {
-        if ($this->sheets === []) {
-            $this->sheets = array();
-            $this->sheetIndexes = array_keys($this->inputFile->sheets);
+    $this->inputFile = new \Spreadsheet_Excel_Reader($filepath, FALSE, 'UTF-8');
 
-            foreach ($this->sheetIndexes as $SheetIndex) {
-                $this->sheets[] = $this->inputFile->boundsheets[$SheetIndex]['name'];
-            }
-        }
-        return $this->sheets;
+    if (function_exists('mb_convert_encoding')) {
+      $this->inputFile->setUTFEncoder('mb');
     }
 
-    /**
-     * Changes the current sheet in the file to another
-     *
-     * @param int Sheet index
-     *
-     * @return bool True if sheet was successfully changed, false otherwise.
-     */
-    public function changeSheet(int $index): bool
-    {
-        $sheets = $this->sheets();
-
-        if (isset($this->sheets[$index])) {
-            $this->rewind();
-            $this->currentSheet = $this->sheetIndexes[$index];
-
-            $columnCount = $this->inputFile->sheets[$this->currentSheet]['numCols'];
-            $this->rowCount = $this->inputFile->sheets[$this->currentSheet]['numRows'];
-
-            // For the case when Spreadsheet_Excel_Reader doesn't have the row count set correctly.
-            if (!$this->rowCount && count($this->inputFile->sheets[$this->currentSheet]['cells'])) {
-                end($this->inputFile->sheets[$this->currentSheet]['cells']);
-                $this->rowCount = (int)key($this->inputFile->sheets[$this->currentSheet]['cells']);
-            }
-
-            if ($columnCount) {
-                $this->emptyRow = array_fill(1, $columnCount, '');
-            } else {
-                $this->emptyRow = array();
-            }
-        }
-
-        return false;
+    if (empty($this->inputFile->sheets)) {
+      $this->hasError = TRUE;
+      return;
     }
 
-    // !Iterator interface methods
+    $this->changeSheet(0);
+  }
 
-    /**
-     * Rewind the Iterator to the first element.
-     * Similar to the reset() function for arrays in PHP
-     */
-    public function rewind(): void
-    {
-        $this->index = 0;
+  /**
+   * Destructs the object.
+   */
+  public function __destruct() {
+    unset($this->inputFile);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function sheets(): array {
+    if ($this->sheets === []) {
+      $this->sheets = [];
+      $this->sheetIndexes = array_keys($this->inputFile->sheets);
+
+      foreach ($this->sheetIndexes as $sheetIndex) {
+        $this->sheets[] = $this->inputFile->boundsheets[$sheetIndex]['name'];
+      }
     }
 
-    /**
-     * Return the current element.
-     * Similar to the current() function for arrays in PHP
-     *
-     * @return array current element from the collection
-     */
-    public function current(): array
-    {
-        if ($this->index === 0) {
-            $this->next();
-        }
+    return $this->sheets;
+  }
 
-        return $this->currentRow;
+  /**
+   * {@inheritdoc}
+   */
+  public function changeSheet(int $index): bool {
+    $sheets = $this->sheets(); // phpcs:ignore
+
+    if (isset($this->sheets[$index])) {
+      $this->rewind();
+      $this->currentSheet = $this->sheetIndexes[$index];
+
+      $columnCount = $this->inputFile->sheets[$this->currentSheet]['numCols'];
+      $this->rowCount = $this->inputFile->sheets[$this->currentSheet]['numRows'];
+
+      // For the case when the reader doesn't have the row count set correctly.
+      if (!$this->rowCount && count($this->inputFile->sheets[$this->currentSheet]['cells'])) {
+        end($this->inputFile->sheets[$this->currentSheet]['cells']);
+        $this->rowCount = (int) key($this->inputFile->sheets[$this->currentSheet]['cells']);
+      }
+
+      $this->emptyRow = [];
+      if ($columnCount) {
+        $this->emptyRow = array_fill(1, $columnCount, '');
+      }
     }
 
-    /**
-     * Move forward to next element.
-     * Similar to the next() function for arrays in PHP
-     */
-    public function next(): void
-    {
-        // Internal counter is advanced here instead of the if statement
-        //	because apparently it's fully possible that an empty row will not be
-        //	present at all
-        $this->index++;
+    return FALSE;
+  }
 
-        if ($this->hasError) {
-            return;
-        }
+  /**
+   * {@inheritdoc}
+   */
+  public function rewind(): void {
+    $this->index = 0;
+  }
 
-        if (isset($this->inputFile->sheets[$this->currentSheet]['cells'][$this->index])) {
-            $this->currentRow = $this->inputFile->sheets[$this->currentSheet]['cells'][$this->index];
-            if (!$this->currentRow) {
-                return;
-            }
-
-            $this->currentRow = $this->currentRow + $this->emptyRow;
-            ksort($this->currentRow);
-
-            $this->currentRow = array_values($this->currentRow);
-            return;
-        }
-
-        $this->currentRow = $this->emptyRow;
+  /**
+   * {@inheritdoc}
+   */
+  public function current(): array {
+    if ($this->index === 0) {
+      $this->next();
     }
 
-    /**
-     * Return the identifying key of the current element.
-     * Similar to the key() function for arrays in PHP
-     */
-    public function key(): int
-    {
-        return $this->index;
+    return $this->currentRow;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function next(): void {
+    // Internal counter is advanced here instead of if because apparently
+    // it's fully possible that an empty row will not be present at all.
+    $this->index++;
+
+    if ($this->hasError) {
+      return;
     }
 
-    /**
-     * Check if there is a current element after calls to rewind() or next().
-     * Used to check if we've iterated to the end of the collection
-     *
-     * @return boolean FALSE if there's nothing more to iterate over
-     */
-    public function valid(): bool
-    {
-        if ($this->hasError) {
-            return false;
-        }
-        return ($this->index <= $this->rowCount);
+    if (isset($this->inputFile->sheets[$this->currentSheet]['cells'][$this->index])) {
+      $this->currentRow = $this->inputFile->sheets[$this->currentSheet]['cells'][$this->index];
+      if (!$this->currentRow) {
+        return;
+      }
+
+      $this->currentRow = ($this->currentRow + $this->emptyRow);
+      ksort($this->currentRow);
+
+      $this->currentRow = array_values($this->currentRow);
+      return;
     }
 
-    // !Countable interface method
+    $this->currentRow = $this->emptyRow;
+  }
 
-    /**
-     * Ostensibly should return the count of the contained items but this just returns the number
-     * of rows read so far. It's not really correct but at least coherent.
-     */
-    public function count(): int
-    {
-        if ($this->hasError) {
-            return 0;
-        }
+  /**
+   * {@inheritdoc}
+   */
+  public function key(): int {
+    return $this->index;
+  }
 
-        return $this->rowCount;
+  /**
+   * {@inheritdoc}
+   */
+  public function valid(): bool {
+    if ($this->hasError) {
+      return FALSE;
     }
+
+    return ($this->index <= $this->rowCount);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function count(): int {
+    return $this->hasError ? 0 : $this->rowCount;
+  }
+
 }

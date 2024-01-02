@@ -2,565 +2,573 @@
 
 namespace KoenVanMeijeren\SpreadsheetReader;
 
-use RuntimeException;
-use SimpleXMLElement;
-use XMLReader;
-use ZipArchive;
-
 /**
- * Class for parsing XLSX files specifically
- *
- * @version 1.0
- * @author KoenVanMeijeren
+ * Class for parsing XLSX files specifically.
  */
-class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface
-{
-    public const CELL_TYPE_BOOL = 'b';
-    public const CELL_TYPE_NUMBER = 'n';
-    public const CELL_TYPE_ERROR = 'e';
-    public const CELL_TYPE_SHARED_STR = 's';
-    public const CELL_TYPE_STR = 'str';
-    public const CELL_TYPE_INLINE_STR = 'inlineStr';
+class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
+  public const CELL_TYPE_BOOL = 'b';
+  public const CELL_TYPE_NUMBER = 'n';
+  public const CELL_TYPE_ERROR = 'e';
+  public const CELL_TYPE_SHARED_STR = 's';
+  public const CELL_TYPE_STR = 'str';
+  public const CELL_TYPE_INLINE_STR = 'inlineStr';
 
-    /**
-     * Number of shared strings that can be reasonably cached, i.e., that aren't read from file but stored in memory.
-     *    If the total number of shared strings is higher than this, caching is not used.
-     *    If this value is null, shared strings are cached regardless of amount.
-     *    With large shared string caches, there are huge performance gains, however, a lot of memory could be used which
-     *    can be a problem, especially on shared hosting.
-     */
-    public const SHARED_STRING_CACHE_LIMIT = 1048576;
+  /**
+   * Number of shared strings that can be reasonably cached.
+   *
+   * E,g., that aren't read from file but stored in memory. If the total number
+   * of shared strings is higher than this, caching is not used. If this value
+   * is null, shared strings are cached regardless of amount. With large shared
+   * string caches, there are huge performance gains, however, a lot of memory
+   * could be used which can be a problem, especially on shared hosting.
+   */
+  public const SHARED_STRING_CACHE_LIMIT = 1048576;
 
-    private bool $isValid = false;
+  /**
+   * Whether the file is valid or not.
+   */
+  private bool $isValid = FALSE;
 
-    // Worksheet file
-    /**
-     * @var string Path to the worksheet XML file
-     */
-    private ?string $worksheetPath = null;
-    /**
-     * @var XMLReader XML reader object for the worksheet XML file
-     */
-    private ?XMLReader $worksheet = null;
+  /**
+   * Path to the worksheet XML file.
+   */
+  private ?string $worksheetPath = NULL;
 
-    // Shared strings file
-    /**
-     * @var string Path to shared strings XML file
-     */
-    private ?string $sharedStringsPath = null;
-    /**
-     * @var XMLReader XML reader object for the shared strings XML file
-     */
-    private ?XMLReader $sharedStrings = null;
-    /**
-     * @var array Shared strings cache, if the number of shared strings is low enough
-     */
-    private array $sharedStringCache = [];
+  /**
+   * XML reader object for the worksheet XML file.
+   */
+  private ?\XMLReader $worksheet = NULL;
 
-    // Workbook data
-    /**
-     * @var SimpleXMLElement XML object for the workbook XML file
-     */
-    private ?SimpleXMLElement $workbookXML = null;
+  /**
+   * Path to shared strings XML file.
+   */
+  private ?string $sharedStringsPath = NULL;
 
-    private string $tempDir = '';
-    private array $tempFiles = [];
+  /**
+   * XML reader object for the shared strings XML file.
+   */
+  private ?\XMLReader $sharedStrings = NULL;
 
-    private mixed $currentRow = false;
+  /**
+   * Shared strings cache, if the number of shared strings is low enough.
+   */
+  private array $sharedStringCache = [];
 
-    // Runtime parsing data
-    /**
-     * @var int Current row in the file
-     */
-    private int $currentRowIndex = 0;
+  /**
+   * XML object for the workbook XML file.
+   */
+  private ?\SimpleXMLElement $workbookXML = NULL;
 
-    /**
-     * @var array Data about separate sheets in the file
-     */
-    private array $sheets = [];
+  /**
+   * Temporary directory path.
+   */
+  private string $tempDir;
 
-    private int $sharedStringCount = 0;
-    private int $SharedStringIndex = 0;
-    private mixed $LastSharedStringValue = null;
+  /**
+   * Temporary files created by this class.
+   */
+  private array $tempFiles = [];
 
-    private bool $RowOpen = false;
+  /**
+   * The current row in the file.
+   */
+  private mixed $currentRow = FALSE;
 
-    private bool $SSOpen = false;
-    private bool $SSForwarded = false;
+  /**
+   * Current row in the file.
+   */
+  private int $currentRowIndex = 0;
 
-    /**
-     * @param string Path to file
-     * @param array Options:
-     *    TempDir => string Temporary directory path
-     *    ReturnDateTimeObjects => bool True => dates and times will be returned as PHP DateTime objects, false => as strings
-     */
-    public function __construct(string $Filepath, array $Options = [])
-    {
-        if (!is_readable($Filepath)) {
-            throw new RuntimeException('File not readable (' . $Filepath . ')');
-        }
+  /**
+   * Data about separate sheets in the file.
+   */
+  private array $sheets = [];
 
-        $this->tempDir = isset($Options['TempDir']) && is_writable($Options['TempDir']) ?
-            $Options['TempDir'] :
-            sys_get_temp_dir();
+  /**
+   * Number of shared strings in the file.
+   */
+  private int $sharedStringCount = 0;
 
-        $this->tempDir = rtrim($this->tempDir, DIRECTORY_SEPARATOR);
-        $this->tempDir .= DIRECTORY_SEPARATOR . uniqid('', true) . DIRECTORY_SEPARATOR;
+  /**
+   * Index of the last shared string fetched.
+   */
+  private int $sharedStringIndex = 0;
 
-        $zip = new ZipArchive();
-        $zip_status = $zip->open($Filepath);
+  /**
+   * Value of the last shared string fetched.
+   */
+  private mixed $lastSharedStringValue = NULL;
 
-        if ($zip_status !== true) {
-            throw new RuntimeException('File not readable (' . $Filepath . ') (Error ' . $zip_status . ')');
-        }
+  /**
+   * Whether the current row is open or not.
+   */
+  private bool $isRowOpen = FALSE;
 
-        // Getting the general workbook information
-        if ($zip->locateName('xl/workbook.xml') !== false) {
-            $this->workbookXML = new SimpleXMLElement($zip->getFromName('xl/workbook.xml'));
-        }
+  /**
+   * Whether the current shared string is open or not.
+   */
+  private bool $isSSOpen = FALSE;
 
-        // Extracting the XMLs from the XLSX zip file
-        if ($zip->locateName('xl/sharedStrings.xml') !== false) {
-            $this->sharedStringsPath = $this->tempDir . 'xl' . DIRECTORY_SEPARATOR . 'sharedStrings.xml';
-            $zip->extractTo($this->tempDir, 'xl/sharedStrings.xml');
-            $this->tempFiles[] = $this->tempDir . 'xl' . DIRECTORY_SEPARATOR . 'sharedStrings.xml';
+  /**
+   * Whether the current shared string is open or not.
+   */
+  private bool $isSSForwarded = FALSE;
 
-            if (is_readable($this->sharedStringsPath)) {
-                $this->sharedStrings = new XMLReader();
-                $this->sharedStrings->open($this->sharedStringsPath);
-                $this->prepareSharedStringCache();
-            }
-        }
-
-        // Initializes the sheets.
-        $sheets = $this->sheets();
-        foreach ($this->sheets as $Index => $Name) {
-            if ($zip->locateName('xl/worksheets/sheet' . $Index . '.xml') !== false) {
-                $zip->extractTo($this->tempDir, 'xl/worksheets/sheet' . $Index . '.xml');
-                $this->tempFiles[] = $this->tempDir . 'xl' . DIRECTORY_SEPARATOR . 'worksheets' . DIRECTORY_SEPARATOR . 'sheet' . $Index . '.xml';
-            }
-        }
-
-        $this->changeSheet(0);
-
-        $zip->close();
+  /**
+   * Constructs a new object.
+   */
+  public function __construct(string $filepath, array $options = []) {
+    if (!is_readable($filepath)) {
+      throw new \RuntimeException('File not readable (' . $filepath . ')');
     }
 
-    /**
-     * Destructor, destroys all that remains (closes and deletes temp files)
-     */
-    public function __destruct()
-    {
-        foreach ($this->tempFiles as $TempFile) {
-            @unlink($TempFile);
-        }
+    $this->tempDir = isset($options['TempDir']) && is_writable($options['TempDir']) ? $options['TempDir'] : sys_get_temp_dir();
 
-        // Better safe than sorry - shouldn't try deleting '.' or '/', or '..'.
-        if (strlen($this->tempDir) > 2) {
-            @rmdir($this->tempDir . 'xl' . DIRECTORY_SEPARATOR . 'worksheets');
-            @rmdir($this->tempDir . 'xl');
-            @rmdir($this->tempDir);
-        }
+    $this->tempDir = rtrim($this->tempDir, DIRECTORY_SEPARATOR);
+    $this->tempDir .= DIRECTORY_SEPARATOR . uniqid('', TRUE) . DIRECTORY_SEPARATOR;
 
-        if ($this->worksheet instanceof XMLReader) {
-            $this->worksheet->close();
-            unset($this->worksheet);
-        }
-        unset($this->worksheetPath);
-
-        if ($this->sharedStrings instanceof XMLReader) {
-            $this->sharedStrings->close();
-            unset($this->sharedStrings);
-        }
-        unset($this->sharedStringsPath);
-
-        if ($this->workbookXML) {
-            unset($this->workbookXML);
-        }
+    $zip = new \ZipArchive();
+    $zipStatus = $zip->open($filepath);
+    if ($zipStatus !== TRUE) {
+      throw new \RuntimeException('File not readable (' . $filepath . ') (Error ' . $zipStatus . ')');
     }
 
-    /**
-     * Retrieves an array with information about sheets in the current file
-     *
-     * @return array List of sheets (key is sheet index, value is name)
-     */
-    public function sheets(): array
-    {
-        if ($this->sheets === []) {
-            foreach ($this->workbookXML->sheets->sheet as $Index => $Sheet) {
-                $this->sheets[(string)$Sheet['sheetId']] = (string)$Sheet['name'];
-            }
-            ksort($this->sheets);
-        }
-        return array_values($this->sheets);
+    // Getting the general workbook information.
+    if ($zip->locateName('xl/workbook.xml') !== FALSE) {
+      $this->workbookXML = new \SimpleXMLElement($zip->getFromName('xl/workbook.xml'));
     }
 
-    /**
-     * Changes the current sheet in the file to another
-     *
-     * @param int Sheet index
-     *
-     * @return bool True if sheet was successfully changed, false otherwise.
-     */
-    public function changeSheet(int $index): bool
-    {
-        $RealSheetIndex = false;
-        $Sheets = $this->sheets();
-        if (isset($Sheets[$index])) {
-            $SheetIndexes = array_keys($this->sheets);
-            $RealSheetIndex = $SheetIndexes[$index];
-        }
+    // Extracting the XMLs from the XLSX zip file.
+    if ($zip->locateName('xl/sharedStrings.xml') !== FALSE) {
+      $this->sharedStringsPath = $this->tempDir . 'xl' . DIRECTORY_SEPARATOR . 'sharedStrings.xml';
+      $zip->extractTo($this->tempDir, 'xl/sharedStrings.xml');
+      $this->tempFiles[] = $this->tempDir . 'xl' . DIRECTORY_SEPARATOR . 'sharedStrings.xml';
 
-        $TempWorksheetPath = $this->tempDir . 'xl/worksheets/sheet' . $RealSheetIndex . '.xml';
-
-        if ($RealSheetIndex !== false && is_readable($TempWorksheetPath)) {
-            $this->worksheetPath = $TempWorksheetPath;
-
-            $this->rewind();
-            return true;
-        }
-
-        return false;
+      if (is_readable($this->sharedStringsPath)) {
+        $this->sharedStrings = new \XMLReader();
+        $this->sharedStrings->open($this->sharedStringsPath);
+        $this->prepareSharedStringCache();
+      }
     }
 
-    /**
-     * Creating shared string cache if the number of shared strings is acceptably low (or there is no limit on the amount
-     */
-    private function prepareSharedStringCache(): void
-    {
-        while ($this->sharedStrings->read()) {
-            if ($this->sharedStrings->name == 'sst') {
-                $this->sharedStringCount = $this->sharedStrings->getAttribute('uniqueCount');
-                break;
-            }
-        }
-
-        if (!$this->sharedStringCount || (self::SHARED_STRING_CACHE_LIMIT < $this->sharedStringCount && self::SHARED_STRING_CACHE_LIMIT !== null)) {
-            return;
-        }
-
-        $CacheIndex = 0;
-        $CacheValue = '';
-        while ($this->sharedStrings->read()) {
-            switch ($this->sharedStrings->name) {
-                case 'si':
-                    if ($this->sharedStrings->nodeType == XMLReader::END_ELEMENT) {
-                        $this->sharedStringCache[$CacheIndex] = $CacheValue;
-                        $CacheIndex++;
-                        $CacheValue = '';
-                    }
-                    break;
-                case 't':
-                    if ($this->sharedStrings->nodeType == XMLReader::END_ELEMENT) {
-                        continue 2;
-                    }
-                    $CacheValue .= $this->sharedStrings->readString();
-                    break;
-            }
-        }
-
-        $this->sharedStrings->close();
+    // Initializes the sheets.
+    $sheets = $this->sheets(); // phpcs:ignore
+    foreach (array_keys($this->sheets) as $index) {
+      if ($zip->locateName('xl/worksheets/sheet' . $index . '.xml') !== FALSE) {
+        $zip->extractTo($this->tempDir, 'xl/worksheets/sheet' . $index . '.xml');
+        $this->tempFiles[] = $this->tempDir . 'xl' . DIRECTORY_SEPARATOR . 'worksheets' . DIRECTORY_SEPARATOR . 'sheet' . $index . '.xml';
+      }
     }
 
-    /**
-     * Retrieves a shared string value by its index
-     */
-    private function getSharedString(int $Index): string
-    {
-        if ((self::SHARED_STRING_CACHE_LIMIT === null || self::SHARED_STRING_CACHE_LIMIT > 0) && !empty($this->sharedStringCache)) {
-            return $this->sharedStringCache[$Index] ?? '';
-        }
+    $this->changeSheet(0);
+    $zip->close();
+  }
 
-        // If the desired index is before the current, rewind the XML
-        if ($this->SharedStringIndex > $Index) {
-            $this->SSOpen = false;
-            $this->sharedStrings->close();
-            $this->sharedStrings->open($this->sharedStringsPath);
-            $this->SharedStringIndex = 0;
-            $this->LastSharedStringValue = null;
-            $this->SSForwarded = false;
-        }
-
-        // Finding the unique string count (if not already read)
-        if ($this->SharedStringIndex == 0 && !$this->sharedStringCount) {
-            while ($this->sharedStrings->read()) {
-                if ($this->sharedStrings->name == 'sst') {
-                    $this->sharedStringCount = $this->sharedStrings->getAttribute('uniqueCount');
-                    break;
-                }
-            }
-        }
-
-        // If index of the desired string is larger than possible, don't even bother.
-        if ($this->sharedStringCount && ($Index >= $this->sharedStringCount)) {
-            return '';
-        }
-
-        // If an index with the same value as the last already fetched is requested
-        // (any further traversing the tree would get us further away from the node)
-        if (($Index == $this->SharedStringIndex) && ($this->LastSharedStringValue !== null)) {
-            return $this->LastSharedStringValue;
-        }
-
-        // Find the correct <si> node with the desired index
-        while ($this->SharedStringIndex <= $Index) {
-            // SSForwarded is set further to avoid double reading in case nodes are skipped.
-            if ($this->SSForwarded) {
-                $this->SSForwarded = false;
-            } else {
-                $ReadStatus = $this->sharedStrings->read();
-                if (!$ReadStatus) {
-                    break;
-                }
-            }
-
-            if ($this->sharedStrings->name == 'si') {
-                if ($this->sharedStrings->nodeType == XMLReader::END_ELEMENT) {
-                    $this->SSOpen = false;
-                    $this->SharedStringIndex++;
-                } else {
-                    $this->SSOpen = true;
-
-                    if ($this->SharedStringIndex < $Index) {
-                        $this->SSOpen = false;
-                        $this->sharedStrings->next('si');
-                        $this->SSForwarded = true;
-                        $this->SharedStringIndex++;
-                        continue;
-                    }
-
-                    break;
-                }
-            }
-        }
-
-        $Value = '';
-
-        // Extract the value from the shared string
-        if ($this->SSOpen && ($this->SharedStringIndex == $Index)) {
-            while ($this->sharedStrings->read()) {
-
-                switch ($this->sharedStrings->name) {
-                    case 't':
-                        if ($this->sharedStrings->nodeType == XMLReader::END_ELEMENT) {
-                            continue 2;
-                        }
-                        $Value .= $this->sharedStrings->readString();
-                        break;
-                    case 'si':
-                        if ($this->sharedStrings->nodeType == XMLReader::END_ELEMENT) {
-                            $this->SSOpen = false;
-                            $this->SSForwarded = true;
-                            break 2;
-                        }
-                        break;
-                }
-            }
-        }
-
-        if ($Value) {
-            $this->LastSharedStringValue = $Value;
-        }
-
-        return $Value;
+  /**
+   * Destructor, destroys all that remains (closes and deletes temp files)
+   */
+  public function __destruct() {
+    foreach ($this->tempFiles as $tempFile) {
+      @unlink($tempFile);
     }
 
-    // !Iterator interface methods
-
-    /**
-     * Rewind the Iterator to the first element.
-     * Similar to the reset() function for arrays in PHP
-     */
-    public function rewind(): void
-    {
-        // Removed the check whether $this -> Index == 0 otherwise ChangeSheet doesn't work properly
-
-        // If the worksheet was already iterated, the XML file is reopened.
-        // Otherwise, it should be at the beginning anyway
-        if ($this->worksheet instanceof XMLReader) {
-            $this->worksheet->close();
-        } else {
-            $this->worksheet = new XMLReader();
-        }
-
-        $this->worksheet->open($this->worksheetPath);
-
-        $this->isValid = true;
-        $this->RowOpen = false;
-        $this->currentRow = false;
-        $this->currentRowIndex = 0;
+    // Better safe than sorry - shouldn't try deleting '.' or '/', or '..'.
+    if (strlen($this->tempDir) > 2) {
+      @rmdir($this->tempDir . 'xl' . DIRECTORY_SEPARATOR . 'worksheets');
+      @rmdir($this->tempDir . 'xl');
+      @rmdir($this->tempDir);
     }
 
-    /**
-     * Return the current element.
-     * Similar to the current() function for arrays in PHP
-     *
-     * @return mixed current element from the collection
-     */
-    public function current(): mixed
-    {
-        if ($this->currentRowIndex === 0 && $this->currentRow === false) {
-            $this->next();
-            $this->currentRowIndex--;
-        }
-        return $this->currentRow;
+    if ($this->worksheet instanceof \XMLReader) {
+      $this->worksheet->close();
+      unset($this->worksheet);
     }
 
-    /**
-     * Move forward to the next element.
-     * Similar to the next() function for arrays in PHP
-     */
-    public function next(): void
-    {
-        $this->currentRowIndex++;
+    unset($this->worksheetPath);
 
-        $this->currentRow = array();
+    if ($this->sharedStrings instanceof \XMLReader) {
+      $this->sharedStrings->close();
+      unset($this->sharedStrings);
+    }
 
-        if (!$this->RowOpen) {
-            while ($this->isValid = $this->worksheet->read()) {
-                if ($this->worksheet->name == 'row') {
-                    // Getting the row-spanning area (stored as e.g., 1:12)
-                    // so that the last cells will be present, even if empty
-                    $RowSpans = $this->worksheet->getAttribute('spans');
-                    if ($RowSpans) {
-                        $RowSpans = explode(':', $RowSpans);
-                        $CurrentRowColumnCount = $RowSpans[1];
-                    } else {
-                        $CurrentRowColumnCount = 0;
-                    }
+    unset($this->sharedStringsPath);
 
-                    if ($CurrentRowColumnCount > 0) {
-                        $this->currentRow = array_fill(0, $CurrentRowColumnCount, '');
-                    }
+    if ($this->workbookXML) {
+      unset($this->workbookXML);
+    }
+  }
 
-                    $this->RowOpen = true;
-                    break;
-                }
-            }
+  /**
+   * {@inheritDoc}
+   */
+  public function sheets(): array {
+    if ($this->sheets === []) {
+      foreach ($this->workbookXML->sheets->sheet as $sheet) {
+        $this->sheets[(string) $sheet['sheetId']] = (string) $sheet['name'];
+      }
+
+      ksort($this->sheets);
+    }
+
+    return array_values($this->sheets);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function changeSheet(int $index): bool {
+    $realSheetIndex = FALSE;
+    $sheets = $this->sheets();
+    if (isset($sheets[$index])) {
+      $sheetIndexes = array_keys($this->sheets);
+      $realSheetIndex = $sheetIndexes[$index];
+    }
+
+    $tempWorksheetPath = $this->tempDir . 'xl/worksheets/sheet' . $realSheetIndex . '.xml';
+
+    if ($realSheetIndex !== FALSE && is_readable($tempWorksheetPath)) {
+      $this->worksheetPath = $tempWorksheetPath;
+
+      $this->rewind();
+      return TRUE;
+    }
+
+    return FALSE;
+  }
+
+  /**
+   * Create shared string cache.
+   *
+   * Only done if the number of shared strings is acceptably low or there is no
+   * limit on the amount.
+   */
+  private function prepareSharedStringCache(): void {
+    while ($this->sharedStrings->read()) {
+      if ($this->sharedStrings->name == 'sst') {
+        $this->sharedStringCount = $this->sharedStrings->getAttribute('uniqueCount');
+        break;
+      }
+    }
+
+    if (!$this->sharedStringCount || (self::SHARED_STRING_CACHE_LIMIT < $this->sharedStringCount && self::SHARED_STRING_CACHE_LIMIT !== NULL)) {
+      return;
+    }
+
+    $cacheIndex = 0;
+    $cacheValue = '';
+    while ($this->sharedStrings->read()) {
+      switch ($this->sharedStrings->name) {
+        case 'si':
+          if ($this->sharedStrings->nodeType == \XMLReader::END_ELEMENT) {
+            $this->sharedStringCache[$cacheIndex] = $cacheValue;
+            $cacheIndex++;
+            $cacheValue = '';
+          }
+          break;
+
+        case 't':
+          if ($this->sharedStrings->nodeType == \XMLReader::END_ELEMENT) {
+            continue 2;
+          }
+
+          $cacheValue .= $this->sharedStrings->readString();
+          break;
+      }
+    }
+
+    $this->sharedStrings->close();
+  }
+
+  /**
+   * Retrieves a shared string value by its index.
+   */
+  private function getSharedString(int $index): string {
+    if ((self::SHARED_STRING_CACHE_LIMIT === NULL || self::SHARED_STRING_CACHE_LIMIT > 0) && !empty($this->sharedStringCache)) {
+      return ($this->sharedStringCache[$index] ?? '');
+    }
+
+    // If the desired index is before the current, rewind the XML.
+    if ($this->sharedStringIndex > $index) {
+      $this->isSSOpen = FALSE;
+      $this->sharedStrings->close();
+      $this->sharedStrings->open($this->sharedStringsPath);
+      $this->sharedStringIndex = 0;
+      $this->lastSharedStringValue = NULL;
+      $this->isSSForwarded = FALSE;
+    }
+
+    // Finding the unique string count (if not already read)
+    if ($this->sharedStringIndex == 0 && !$this->sharedStringCount) {
+      while ($this->sharedStrings->read()) {
+        if ($this->sharedStrings->name == 'sst') {
+          $this->sharedStringCount = $this->sharedStrings->getAttribute('uniqueCount');
+          break;
         }
+      }
+    }
 
-        // Reading the necessary row, if found
-        if ($this->RowOpen) {
-            // These two are needed to control for empty cells
-            $MaxIndex = 0;
-            $CellCount = 0;
+    // If index of desired string is larger than possible, don't even bother.
+    if ($this->sharedStringCount && ($index >= $this->sharedStringCount)) {
+      return '';
+    }
 
-            $CellHasSharedString = false;
+    // If an index with the same value as the last already fetched is requested
+    // (any further traversing the tree would get us further away from the node)
+    if (($index == $this->sharedStringIndex) && ($this->lastSharedStringValue !== NULL)) {
+      return $this->lastSharedStringValue;
+    }
 
-            while ($this->isValid = $this->worksheet->read()) {
-                switch ($this->worksheet->name) {
-                    // Row end found.
-                    case 'row':
-                        if ($this->worksheet->nodeType == XMLReader::END_ELEMENT) {
-                            $this->RowOpen = false;
-                            break 2;
-                        }
-                        break;
-                    // Cell
-                    case 'c':
-                        // If it is a closing tag, skip it
-                        if ($this->worksheet->nodeType == XMLReader::END_ELEMENT) {
-                            continue 2;
-                        }
+    // Find the correct <si> node with the desired index.
+    while ($this->sharedStringIndex <= $index) {
+      // SSForwarded is set further to avoid double reading in case nodes are
+      // skipped.
+      if ($this->isSSForwarded) {
+        $this->isSSForwarded = FALSE;
+      }
+      else {
+        $readStatus = $this->sharedStrings->read();
+        if (!$readStatus) {
+          break;
+        }
+      }
 
-                        // Get the index of the cell
-                        $Index = $this->worksheet->getAttribute('r');
-                        $Letter = preg_replace('{[^[:alpha:]]}S', '', $Index);
-                        $Index = self::indexFromColumnLetter($Letter);
+      if ($this->sharedStrings->name == 'si') {
+        if ($this->sharedStrings->nodeType == \XMLReader::END_ELEMENT) {
+          $this->isSSOpen = FALSE;
+          $this->sharedStringIndex++;
+        }
+        else {
+          $this->isSSOpen = TRUE;
 
-                        $CellHasSharedString = $this->worksheet->getAttribute('t') == self::CELL_TYPE_SHARED_STR;
+          if ($this->sharedStringIndex < $index) {
+            $this->isSSOpen = FALSE;
+            $this->sharedStrings->next('si');
+            $this->isSSForwarded = TRUE;
+            $this->sharedStringIndex++;
+            continue;
+          }
 
-                        $Value = $this->worksheet->readString();
+          break;
+        }
+      }
+    }
 
-                        if ($CellHasSharedString) {
-                            $Value = $this->getSharedString((int) $Value);
-                        }
+    $value = '';
 
-                        $this->currentRow[$Index] = $Value;
-
-                        $CellCount++;
-                        if ($Index > $MaxIndex) {
-                            $MaxIndex = $Index;
-                        }
-
-                        break;
-                    // Cell value
-                    case 'v':
-                        if ($this->worksheet->nodeType == XMLReader::END_ELEMENT) {
-                            continue 2;
-                        }
-
-                        $Value = $this->worksheet->readString();
-
-                        if ($CellHasSharedString) {
-                            $Value = $this->getSharedString((int) $Value);
-                        }
-
-                        $this->currentRow[$Index] = $Value;
-                        break;
-                }
+    // Extract the value from the shared string.
+    if ($this->isSSOpen && ($this->sharedStringIndex == $index)) {
+      while ($this->sharedStrings->read()) {
+        switch ($this->sharedStrings->name) {
+          case 't':
+            if ($this->sharedStrings->nodeType == \XMLReader::END_ELEMENT) {
+              continue 2;
             }
 
-            // Adding empty cells, if necessary,
-            // Only empty cells between and on the left side are added
-            if ($MaxIndex + 1 > $CellCount) {
-                $this->currentRow = $this->currentRow + array_fill(0, $MaxIndex + 1, '');
-                ksort($this->currentRow);
+            $value .= $this->sharedStrings->readString();
+            break;
+
+          case 'si':
+            if ($this->sharedStrings->nodeType == \XMLReader::END_ELEMENT) {
+              $this->isSSOpen = FALSE;
+              $this->isSSForwarded = TRUE;
+              break 2;
             }
+            break;
         }
+      }
     }
 
-    /**
-     * Return the identifying key of the current element.
-     * Similar to the key() function for arrays in PHP
-     */
-    public function key(): int
-    {
-        return $this->currentRowIndex;
+    if ($value) {
+      $this->lastSharedStringValue = $value;
     }
 
-    /**
-     * Check if there is a current element after calls to rewind() or next().
-     * Used to check if we've iterated to the end of the collection
-     *
-     * @return boolean FALSE if there's nothing more to iterate over
-     */
-    public function valid(): bool
-    {
-        return $this->isValid;
+    return $value;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function rewind(): void {
+    // Removed the check whether $this -> Index == 0 otherwise ChangeSheet
+    // doesn't work properly. If the worksheet was already iterated, the XML
+    // file is reopened. Otherwise, it should be at the beginning anyway.
+    if ($this->worksheet instanceof \XMLReader) {
+      $this->worksheet->close();
+    }
+    else {
+      $this->worksheet = new \XMLReader();
     }
 
-    // !Countable interface method
+    $this->worksheet->open($this->worksheetPath);
 
-    /**
-     * Ostensibly should return the count of the contained items but this just returns the number
-     * of rows read so far. It's not really correct but at least coherent.
-     */
-    public function count(): int
-    {
-        return $this->currentRowIndex + 1;
+    $this->isValid = TRUE;
+    $this->isRowOpen = FALSE;
+    $this->currentRow = FALSE;
+    $this->currentRowIndex = 0;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function current(): mixed {
+    if ($this->currentRowIndex === 0 && $this->currentRow === FALSE) {
+      $this->next();
+      $this->currentRowIndex--;
     }
 
-    /**
-     * Takes the column letter and converts it to a numerical index (0-based)
-     *
-     * @param string Letter(s) to convert
-     *
-     * @return mixed Numeric index (0-based) or boolean false if it cannot be calculated
-     */
-    public static function indexFromColumnLetter($Letter): int
-    {
-        $Letter = strtoupper($Letter);
+    return $this->currentRow;
+  }
 
-        $Result = 0;
-        for ($i = strlen($Letter) - 1, $j = 0; $i >= 0; $i--, $j++) {
-            $Ord = ord($Letter[$i]) - 64;
-            if ($Ord > 26) {
-                // Something is very, very wrong
-                return false;
+  /**
+   * {@inheritDoc}
+   */
+  public function next(): void {
+    $this->currentRowIndex++;
+
+    $this->currentRow = [];
+
+    if (!$this->isRowOpen) {
+      while ($this->isValid = $this->worksheet->read()) {
+        if ($this->worksheet->name == 'row') {
+          // Getting the row-spanning area (stored as e.g., 1:12)
+          // so that the last cells will be present, even if empty.
+          $rowSpans = $this->worksheet->getAttribute('spans');
+          if ($rowSpans) {
+            $rowSpans = explode(':', $rowSpans);
+            $currentRowColumnCount = $rowSpans[1];
+          }
+          else {
+            $currentRowColumnCount = 0;
+          }
+
+          if ($currentRowColumnCount > 0) {
+            $this->currentRow = array_fill(0, $currentRowColumnCount, '');
+          }
+
+          $this->isRowOpen = TRUE;
+          break;
+        }
+      }
+    }
+
+    // Reading the necessary row, if found.
+    if ($this->isRowOpen) {
+      // These two are needed to control for empty cells.
+      $maxIndex = 0;
+      $cellCount = 0;
+
+      $cellHasSharedString = FALSE;
+
+      while ($this->isValid = $this->worksheet->read()) {
+        switch ($this->worksheet->name) {
+          // Row end found.
+          case 'row':
+            if ($this->worksheet->nodeType == \XMLReader::END_ELEMENT) {
+              $this->isRowOpen = FALSE;
+              break 2;
             }
-            $Result += $Ord * (26 ** $j);
+            break;
+
+          // Cell.
+          case 'c':
+            // If it is a closing tag, skip it.
+            if ($this->worksheet->nodeType == \XMLReader::END_ELEMENT) {
+              continue 2;
+            }
+
+            // Get the index of the cell.
+            $index = $this->worksheet->getAttribute('r');
+            $letter = preg_replace('{[^[:alpha:]]}S', '', $index);
+            $index = self::indexFromColumnLetter($letter);
+
+            $cellHasSharedString = $this->worksheet->getAttribute('t') == self::CELL_TYPE_SHARED_STR;
+
+            $value = $this->worksheet->readString();
+
+            if ($cellHasSharedString) {
+              $value = $this->getSharedString((int) $value);
+            }
+
+            $this->currentRow[$index] = $value;
+
+            $cellCount++;
+            if ($index > $maxIndex) {
+              $maxIndex = $index;
+            }
+            break;
+
+          // Cell value.
+          case 'v':
+            if ($this->worksheet->nodeType == \XMLReader::END_ELEMENT) {
+              continue 2;
+            }
+
+            $value = $this->worksheet->readString();
+
+            if ($cellHasSharedString) {
+              $value = $this->getSharedString((int) $value);
+            }
+
+            $this->currentRow[$index] = $value;
+            break;
         }
-        return $Result - 1;
+      }
+
+      // Adding empty cells, if necessary,
+      // Only empty cells between and on the left side are added.
+      if (($maxIndex + 1) > $cellCount) {
+        $this->currentRow = ($this->currentRow + array_fill(0, ($maxIndex + 1), ''));
+        ksort($this->currentRow);
+      }
     }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function key(): int {
+    return $this->currentRowIndex;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function valid(): bool {
+    return $this->isValid;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function count(): int {
+    return $this->currentRowIndex + 1;
+
+  }
+
+  /**
+   * Takes the column letter and converts it to a numerical index (0-based)
+   *
+   * @param string $letter
+   *   Letter(s) to convert.
+   *
+   * @return int
+   *   Numeric index (0-based) or boolean false if it cannot be calculated.
+   */
+  public static function indexFromColumnLetter(string $letter): int {
+    $letter = strtoupper($letter);
+
+    $result = 0;
+    for ($i = (strlen($letter) - 1), $j = 0; $i >= 0; $i--, $j++) {
+      $ord = (ord($letter[$i]) - 64);
+      if ($ord > 26) {
+        // Something is very, very wrong.
+        return FALSE;
+      }
+
+      $result += ($ord * (26 ** $j));
+    }
+
+    return ($result - 1);
+  }
+
 }

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- https://github.com/squizlabs/PHP_CodeSniffer/wiki/Annotated-Ruleset -->
+<ruleset name="code_sniffer">
+  <description>The coding standards for this project.</description>
+
+  <arg name="colors"/>
+  <arg name="ignore" value=".css,node_modules/*" />
+  <arg name="extensions" value="php,module,inc,install,test,profile,theme"/>
+
+  <file>src</file>
+  <file>tests</file>
+
+  <rule ref="Drupal"/>
+  <rule ref="Drupal.Commenting.DocComment.MissingShort">
+    <severity>0</severity>
+  </rule>
+
+  <rule ref="DrupalPractice"/>
+
+  <rule ref="SlevomatCodingStandard.Arrays.MultiLineArrayEndBracketPlacement" />
+  <rule ref="SlevomatCodingStandard.Arrays.SingleLineArrayWhitespace" />
+  <rule ref="SlevomatCodingStandard.Arrays.TrailingArrayComma" />
+
+  <rule ref="SlevomatCodingStandard.Classes.BackedEnumTypeSpacing" />
+  <rule ref="SlevomatCodingStandard.Classes.ClassConstantVisibility" />
+  <rule ref="SlevomatCodingStandard.Classes.ClassMemberSpacing" />
+  <rule ref="SlevomatCodingStandard.Classes.ClassStructure">
+      <properties>
+          <property name="groups" type="array">
+              <element value="uses"/>
+              <element value="enum cases"/>
+              <element value="constants"/>
+              <element value="properties"/>
+              <element value="methods"/>
+          </property>
+      </properties>
+  </rule>
+  <rule ref="SlevomatCodingStandard.Classes.ConstantSpacing" />
+  <rule ref="SlevomatCodingStandard.Classes.DisallowLateStaticBindingForConstants" />
+  <rule ref="SlevomatCodingStandard.Classes.DisallowStringExpressionPropertyFetch" />
+  <rule ref="SlevomatCodingStandard.Classes.EnumCaseSpacing" />
+  <rule ref="SlevomatCodingStandard.Classes.ModernClassNameReference" />
+  <rule ref="SlevomatCodingStandard.Classes.MethodSpacing" />
+  <rule ref="SlevomatCodingStandard.Classes.PropertyDeclaration" />
+  <rule ref="SlevomatCodingStandard.Classes.PropertySpacing" />
+  <rule ref="SlevomatCodingStandard.Classes.RequireSelfReference" />
+  <rule ref="SlevomatCodingStandard.Classes.TraitUseSpacing" />
+  <rule ref="SlevomatCodingStandard.Classes.TraitUseDeclaration" />
+  <rule ref="SlevomatCodingStandard.Classes.UselessLateStaticBinding" />
+
+  <rule ref="SlevomatCodingStandard.Commenting.DeprecatedAnnotationDeclaration" />
+  <rule ref="SlevomatCodingStandard.Commenting.DisallowCommentAfterCode" />
+  <rule ref="SlevomatCodingStandard.Commenting.EmptyComment" />
+  <rule ref="SlevomatCodingStandard.Commenting.UselessFunctionDocComment" />
+
+  <rule ref="SlevomatCodingStandard.ControlStructures.AssignmentInCondition" />
+  <rule ref="SlevomatCodingStandard.ControlStructures.DisallowContinueWithoutIntegerOperandInSwitch" />
+  <rule ref="SlevomatCodingStandard.ControlStructures.NewWithParentheses" />
+  <rule ref="SlevomatCodingStandard.ControlStructures.DisallowTrailingMultiLineTernaryOperator" />
+  <rule ref="SlevomatCodingStandard.ControlStructures.RequireNullCoalesceEqualOperator" />
+  <rule ref="SlevomatCodingStandard.ControlStructures.RequireNullCoalesceOperator" />
+  <rule ref="SlevomatCodingStandard.ControlStructures.UselessIfConditionWithReturn" />
+  <rule ref="SlevomatCodingStandard.ControlStructures.UselessTernaryOperator" />
+  <rule ref="SlevomatCodingStandard.ControlStructures.RequireNullSafeObjectOperator" />
+  <rule ref="SlevomatCodingStandard.ControlStructures.DisallowYodaComparison" />
+
+  <rule ref="SlevomatCodingStandard.Exceptions.ReferenceThrowableOnly" />
+  <rule ref="SlevomatCodingStandard.Exceptions.RequireNonCapturingCatch" />
+
+  <rule ref="SlevomatCodingStandard.Functions.ArrowFunctionDeclaration" />
+  <rule ref="SlevomatCodingStandard.Functions.DisallowEmptyFunction" />
+  <rule ref="SlevomatCodingStandard.Functions.DisallowTrailingCommaInCall" />
+  <rule ref="SlevomatCodingStandard.Functions.RequireTrailingCommaInClosureUse" />
+  <rule ref="SlevomatCodingStandard.Functions.RequireTrailingCommaInDeclaration" />
+  <rule ref="SlevomatCodingStandard.Functions.StaticClosure" />
+  <rule ref="SlevomatCodingStandard.Functions.StrictCall" />
+  <rule ref="SlevomatCodingStandard.Functions.UnusedInheritedVariablePassedToClosure" />
+  <rule ref="SlevomatCodingStandard.Functions.UselessParameterDefaultValue" />
+
+  <rule ref="SlevomatCodingStandard.Namespaces.AlphabeticallySortedUses" />
+  <rule ref="SlevomatCodingStandard.Namespaces.DisallowGroupUse" />
+  <rule ref="SlevomatCodingStandard.Namespaces.FullyQualifiedClassNameInAnnotation" />
+  <rule ref="SlevomatCodingStandard.Namespaces.NamespaceDeclaration" />
+  <rule ref="SlevomatCodingStandard.Namespaces.NamespaceSpacing" />
+  <rule ref="SlevomatCodingStandard.Namespaces.RequireOneNamespaceInFile" />
+  <rule ref="SlevomatCodingStandard.Namespaces.UseDoesNotStartWithBackslash" />
+  <rule ref="SlevomatCodingStandard.Namespaces.UseSpacing" />
+  <rule ref="SlevomatCodingStandard.Namespaces.UselessAlias" />
+  <rule ref="SlevomatCodingStandard.Namespaces.UnusedUses" />
+
+  <rule ref="SlevomatCodingStandard.Operators.NegationOperatorSpacing" />
+  <rule ref="SlevomatCodingStandard.Operators.RequireCombinedAssignmentOperator" />
+  <rule ref="SlevomatCodingStandard.Operators.SpreadOperatorSpacing" />
+
+  <rule ref="SlevomatCodingStandard.PHP.DisallowDirectMagicInvokeCall" />
+  <rule ref="SlevomatCodingStandard.PHP.ReferenceSpacing" />
+  <rule ref="SlevomatCodingStandard.PHP.RequireNowdoc" />
+  <rule ref="SlevomatCodingStandard.PHP.OptimizedFunctionsWithoutUnpacking" />
+  <rule ref="SlevomatCodingStandard.PHP.ShortList" />
+  <rule ref="SlevomatCodingStandard.PHP.TypeCast" />
+  <rule ref="SlevomatCodingStandard.PHP.UselessSemicolon" />
+
+  <rule ref="SlevomatCodingStandard.Strings.DisallowVariableParsing" />
+
+  <rule ref="SlevomatCodingStandard.TypeHints.LongTypeHints" />
+  <rule ref="SlevomatCodingStandard.TypeHints.ParameterTypeHintSpacing" />
+  <rule ref="SlevomatCodingStandard.TypeHints.ReturnTypeHintSpacing" />
+  <rule ref="SlevomatCodingStandard.TypeHints.UnionTypeHintFormat" />
+  <rule ref="SlevomatCodingStandard.TypeHints.UselessConstantTypeHint" />
+
+  <rule ref="SlevomatCodingStandard.Variables.DisallowSuperGlobalVariable" />
+  <rule ref="SlevomatCodingStandard.Variables.DuplicateAssignmentToVariable" />
+  <rule ref="SlevomatCodingStandard.Variables.UnusedVariable" />
+  <rule ref="SlevomatCodingStandard.Variables.UselessVariable" />
+
+  <rule ref="SlevomatCodingStandard.Whitespaces.DuplicateSpaces" />
+
+  <!-- Visibility MUST be declared on all methods. -->
+  <rule ref="Squiz.Scope.MethodScope"/>
+  <rule ref="Squiz.WhiteSpace.ScopeKeywordSpacing"/>
+
+  <!-- Method names MUST NOT be prefixed with a single underscore to indicate protected or private visibility. That is, an underscore prefix explicitly has no meaning. -->
+  <rule ref="PSR2.Methods.MethodDeclaration"/>
+  <rule ref="PSR2.Methods.MethodDeclaration.Underscore">
+      <type>error</type>
+      <message>Method name "%s" must not be prefixed with an underscore to indicate visibility</message>
+  </rule>
+</ruleset>
