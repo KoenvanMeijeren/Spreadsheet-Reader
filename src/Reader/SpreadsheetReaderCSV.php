@@ -30,6 +30,8 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
 
   /**
    * File handle.
+   *
+   * @var resource
    */
   private mixed $handle;
 
