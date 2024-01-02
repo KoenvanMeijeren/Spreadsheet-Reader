@@ -7,6 +7,10 @@
 	"time": "2023-07-17",
 	"type": "library",
 	"license": ["MIT"],
+	"scripts": {
+		"pest": "vendor/bin/pest",
+		"test": "pest"
+	},
 	"require": {
 		"php": ">=8.0",
 		"ext-zip": "*",
@@ -21,5 +25,13 @@
 			"KoenVanMeijeren\\SpreadsheetReader\\": "src"
 		}
 
+	},
+	"require-dev": {
+		"pestphp/pest": "^2.30"
+	},
+	"config": {
+		"allow-plugins": {
+			"pestphp/pest-plugin": true
+		}
 	}
 }

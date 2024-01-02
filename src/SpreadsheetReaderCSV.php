@@ -12,7 +12,7 @@ use RuntimeException;
 class SpreadsheetReaderCSV implements SpreadsheetReaderInterface
 {
     /**
-     * @var array Options array, pre-populated with the default values.
+     * Options array, pre-populated with the default values.
      */
     private array $Options = [
         'Delimiter' => ';',
@@ -25,9 +25,9 @@ class SpreadsheetReaderCSV implements SpreadsheetReaderInterface
     /**
      * @var resource File handle
      */
-    private $Handle = false;
+    private $Handle;
 
-    private string $Filepath = '';
+    private string $Filepath;
 
     private int $currentRowIndex = 0;
 
@@ -46,11 +46,8 @@ class SpreadsheetReaderCSV implements SpreadsheetReaderInterface
         $this->Filepath = $filepath;
 
         if (!is_readable($filepath)) {
-            throw new RuntimeException('KoenVanMeijeren\SpreadsheetReader\SpreadsheetReader_CSV: File not readable (' . $filepath . ')');
+            throw new RuntimeException("File not readable ($filepath)");
         }
-
-        // For safety's sake
-        @ini_set('auto_detect_line_endings', true);
 
         $this->Options = array_merge($this->Options, $options);
         $this->Handle = fopen($filepath, 'rb');

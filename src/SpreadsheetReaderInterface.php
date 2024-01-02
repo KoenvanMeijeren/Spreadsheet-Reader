@@ -22,8 +22,6 @@ interface SpreadsheetReaderInterface extends \Iterator, \Countable
     /**
      * Changes the current sheet in the file to another
      *
-     * @param int $index Sheet index
-     *
      * @return bool True if a sheet was successfully changed, false otherwise.
      */
     public function changeSheet(int $index): bool;
