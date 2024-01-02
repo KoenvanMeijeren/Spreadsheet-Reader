@@ -2,6 +2,7 @@
 
 namespace KoenVanMeijeren\SpreadsheetReader;
 
+use KoenVanMeijeren\SpreadsheetReader\Config\SpreadsheetReaderCSVConfig;
 use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
 
 /**
@@ -14,27 +15,14 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
   public const TYPE_ODS = 'ODS';
 
   /**
-   * Options for CSV files.
-   */
-  private array $options = [
-    'Delimiter' => '',
-    'Enclosure' => '"',
-  ];
-
-  /**
-   * Current row in the file.
-   */
-  private int $index = 0;
-
-  /**
    * Handler for the file.
    */
-  private SpreadsheetReaderInterface $handler;
+  private SpreadsheetReaderInterface $reader;
 
   /**
    * Type of the contained spreadsheet.
    */
-  private ?string $type = NULL;
+  private ?string $fileType = NULL;
 
   /**
    * Constructs the spreadsheet reader.
@@ -55,12 +43,12 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
 
     $this->determineAndSetFileType($filepath, $originalFilename, $mimeType);
 
-    $this->handler = match ($this->type) {
+    $this->reader = match ($this->fileType) {
       self::TYPE_XLSX => new SpreadsheetReaderXLSX($filepath),
-      self::TYPE_CSV => new SpreadsheetReaderCSV($filepath, $this->options),
+      self::TYPE_CSV => new SpreadsheetReaderCSV($filepath, new SpreadsheetReaderCSVConfig()),
       self::TYPE_XLS => new SpreadsheetReaderXLS($filepath),
-      self::TYPE_ODS => new SpreadsheetReaderODS($filepath, $this->options),
-      default => throw new \RuntimeException('No handler available for the given type: ' . $this->type),
+      self::TYPE_ODS => new SpreadsheetReaderODS($filepath),
+      default => throw new \RuntimeException('No handler available for the given type: ' . $this->fileType),
     };
   }
 
@@ -68,7 +56,7 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
    * Destructor, destroys all that remains (closes and deletes temp files).
    */
   public function __destruct() {
-    unset($this->options, $this->index, $this->handler, $this->type);
+    unset($this->reader, $this->fileType);
   }
 
   /**
@@ -85,7 +73,7 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
       case 'text/csv':
       case 'text/comma-separated-values':
       case 'text/plain':
-        $this->type = self::TYPE_CSV;
+        $this->fileType = self::TYPE_CSV;
         break;
 
       case 'application/vnd.ms-excel':
@@ -98,22 +86,22 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
       case 'application/xlt':
       case 'application/x-xls':
         // Excel does weird stuff.
-        $this->type = self::TYPE_XLS;
+        $this->fileType = self::TYPE_XLS;
         if (in_array($fileExtension, ['csv', 'tsv', 'txt'], TRUE)) {
-          $this->type = self::TYPE_CSV;
+          $this->fileType = self::TYPE_CSV;
         }
         break;
 
       case 'application/vnd.oasis.opendocument.spreadsheet':
       case 'application/vnd.oasis.opendocument.spreadsheet-template':
-        $this->type = self::TYPE_ODS;
+        $this->fileType = self::TYPE_ODS;
         break;
 
       case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
       case 'application/vnd.openxmlformats-officedocument.spreadsheetml.template':
       case 'application/xlsx':
       case 'application/xltx':
-        $this->type = self::TYPE_XLSX;
+        $this->fileType = self::TYPE_XLSX;
         break;
 
       case 'application/xml':
@@ -121,8 +109,8 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
         break;
     }
 
-    if (!$this->type) {
-      $this->type = match ($fileExtension) {
+    if (!$this->fileType) {
+      $this->fileType = match ($fileExtension) {
         'xlsx', 'xltx', 'xlsm', 'xltm' => self::TYPE_XLSX,
         'xls', 'xlt' => self::TYPE_XLS,
         'ods', 'odt' => self::TYPE_ODS,
@@ -131,19 +119,19 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
     }
 
     // Pre-checking XLS files, in case they are renamed CSV or XLSX files.
-    if ($this->type === self::TYPE_XLS) {
-      $this->handler = new SpreadsheetReaderXLS($filepath);
-      if (!$this->handler->valid()) {
-        $this->handler->__destruct();
+    if ($this->fileType === self::TYPE_XLS) {
+      $this->reader = new SpreadsheetReaderXLS($filepath);
+      if (!$this->reader->valid()) {
+        $this->reader->__destruct();
 
         $zip = new \ZipArchive();
         $zip_file = $zip->open($filepath);
         if (is_resource($zip_file)) {
-          $this->type = self::TYPE_XLSX;
+          $this->fileType = self::TYPE_XLSX;
           $zip->close();
         }
         else {
-          $this->type = self::TYPE_CSV;
+          $this->fileType = self::TYPE_CSV;
         }
       }
     }
@@ -156,7 +144,7 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
    *   Associative array where key is sheet index and value is sheet name.
    */
   public function sheets(): array {
-    return $this->handler->sheets();
+    return $this->reader->sheets();
   }
 
   /**
@@ -170,22 +158,21 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
    *   false if not (for example, if incorrect index was provided).
    */
   public function changeSheet(int $index): bool {
-    return $this->handler->changeSheet($index);
+    return $this->reader->changeSheet($index);
   }
 
   /**
    * {@inheritdoc}
    */
   public function rewind(): void {
-    $this->index = 0;
-    $this->handler->rewind();
+    $this->reader->rewind();
   }
 
   /**
    * {@inheritdoc}
    */
   public function current(): mixed {
-    return $this->handler->current();
+    return $this->reader->current();
 
   }
 
@@ -193,15 +180,14 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
    * {@inheritdoc}
    */
   public function next(): void {
-    $this->index++;
-    $this->handler->next();
+    $this->reader->next();
   }
 
   /**
    * {@inheritdoc}
    */
   public function key(): int {
-    return $this->handler->key();
+    return $this->reader->key();
 
   }
 
@@ -209,31 +195,31 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
    * {@inheritdoc}
    */
   public function valid(): bool {
-    return $this->handler->valid();
+    return $this->reader->valid();
   }
 
   /**
    * {@inheritdoc}
    */
   public function count(): int {
-    return $this->handler->count();
+    return $this->reader->count();
   }
 
   /**
    * {@inheritdoc}
    */
   public function seek(int $offset): void {
-    $currentIndex = $this->handler->key();
+    $currentIndex = $this->reader->key();
     if ($currentIndex !== $offset) {
       if ($offset < $currentIndex || $currentIndex === NULL || $offset === 0) {
         $this->rewind();
       }
 
-      while ($this->handler->valid() && ($offset > $this->handler->key())) {
-        $this->handler->next();
+      while ($this->reader->valid() && ($offset > $this->reader->key())) {
+        $this->reader->next();
       }
 
-      if (!$this->handler->valid()) {
+      if (!$this->reader->valid()) {
         throw new \OutOfBoundsException('SpreadsheetError: Position ' . $offset . ' not found');
       }
     }

@@ -55,22 +55,16 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
   private bool $isValid = FALSE;
 
   /**
-   * Temporary directory path.
-   */
-  private string $temporaryDirectoryPath;
-
-  /**
    * Constructs a new spreadsheet reader for ODS files.
    */
-  public function __construct(string $filepath, array $options = []) {
+  public function __construct(string $filepath) {
     if (!is_readable($filepath)) {
       throw new \RuntimeException('File not readable (' . $filepath . ')');
     }
 
-    $this->temporaryDirectoryPath = isset($options['TempDir']) && is_writable($options['TempDir']) ? $options['TempDir'] : sys_get_temp_dir();
-
-    $this->temporaryDirectoryPath = rtrim($this->temporaryDirectoryPath, DIRECTORY_SEPARATOR);
-    $this->temporaryDirectoryPath .= DIRECTORY_SEPARATOR . uniqid('', TRUE) . DIRECTORY_SEPARATOR;
+    $temporaryDirectoryPath = sys_get_temp_dir();
+    $temporaryDirectoryPath = rtrim($temporaryDirectoryPath, DIRECTORY_SEPARATOR);
+    $temporaryDirectoryPath .= DIRECTORY_SEPARATOR . uniqid('', TRUE) . DIRECTORY_SEPARATOR;
 
     $zip = new \ZipArchive();
     $zipStatus = $zip->open($filepath);
@@ -79,8 +73,8 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
     }
 
     if ($zip->locateName('content.xml') !== FALSE) {
-      $zip->extractTo($this->temporaryDirectoryPath, 'content.xml');
-      $this->contentPath = $this->temporaryDirectoryPath . 'content.xml';
+      $zip->extractTo($temporaryDirectoryPath, 'content.xml');
+      $this->contentPath = $temporaryDirectoryPath . 'content.xml';
     }
 
     $zip->close();

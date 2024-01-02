@@ -2,6 +2,7 @@
 
 namespace KoenVanMeijeren\SpreadsheetReader;
 
+use KoenVanMeijeren\SpreadsheetReader\Config\SpreadsheetReaderCSVConfig;
 use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
 
 /**
@@ -14,10 +15,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
   /**
    * Options array, pre-populated with the default values.
    */
-  private array $options = [
-    'Delimiter' => ';',
-    'Enclosure' => '"',
-  ];
+  private SpreadsheetReaderCSVConfig $config;
 
   /**
    * Encoding of the file.
@@ -54,14 +52,14 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
    *
    * @throws \KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException
    */
-  public function __construct(string $filepath, array $options = []) {
+  public function __construct(string $filepath, SpreadsheetReaderCSVConfig $config) {
     $this->filepath = $filepath;
 
     if (!is_readable($filepath)) {
       throw new FileNotReadableException($filepath);
     }
 
-    $this->options = array_merge($this->options, $options);
+    $this->config = $config;
     $this->handle = fopen($filepath, 'rb');
 
     // Checking the file for byte-order mark to determine encoding.
@@ -105,7 +103,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
     }
 
     // Checking for the delimiter if it should be determined automatically.
-    if (!$this->options['Delimiter']) {
+    if (empty($this->config->delimiter)) {
       // Fgetcsv needs single-byte separators.
       $semicolon = ';';
       $tab = "\t";
@@ -126,7 +124,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
         $delimiter = $commaCount > $tabCount ? $comma : $tab;
       }
 
-      $this->options['Delimiter'] = $delimiter;
+      $this->config->delimiter = $delimiter;
     }
   }
 
@@ -201,7 +199,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
     }
 
     $this->currentRowIndex++;
-    $this->currentRow = fgetcsv($this->handle, NULL, $this->options['Delimiter'], $this->options['Enclosure']);
+    $this->currentRow = fgetcsv($this->handle, NULL, $this->config->delimiter, $this->config->enclosure);
 
     // Converting multibyte unicode strings and trimming enclosure symbols off
     // of them because those aren't recognized in the relevant encodings.
@@ -209,7 +207,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
       foreach ($this->currentRow as $key => $value) {
         $this->currentRow[$key] = trim(trim(
           mb_convert_encoding($value, 'UTF-8', $this->encoding),
-          $this->options['Enclosure']
+          $this->config->enclosure
         ));
       }
     }

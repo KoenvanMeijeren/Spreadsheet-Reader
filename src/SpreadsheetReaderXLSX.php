@@ -119,13 +119,12 @@ class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
   /**
    * Constructs a new object.
    */
-  public function __construct(string $filepath, array $options = []) {
+  public function __construct(string $filepath) {
     if (!is_readable($filepath)) {
       throw new \RuntimeException('File not readable (' . $filepath . ')');
     }
 
-    $this->tempDir = isset($options['TempDir']) && is_writable($options['TempDir']) ? $options['TempDir'] : sys_get_temp_dir();
-
+    $this->tempDir = sys_get_temp_dir();
     $this->tempDir = rtrim($this->tempDir, DIRECTORY_SEPARATOR);
     $this->tempDir .= DIRECTORY_SEPARATOR . uniqid('', TRUE) . DIRECTORY_SEPARATOR;
 
