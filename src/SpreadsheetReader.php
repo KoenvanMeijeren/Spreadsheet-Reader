@@ -33,7 +33,13 @@ class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInterface
    *
    * @throws \KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException
    */
-  public function __construct(string $filepath, ?string $originalFilename = NULL, ?string $mimeType = NULL) {
+  public function __construct(string $filepath, ?string $originalFilename = NULL, ?string $mimeType = NULL, ?SpreadsheetReaderInterface $reader = NULL) {
+    // If a reader is passed, use that one. And skip the rest.
+    if ($reader) {
+      $this->reader = $reader;
+      return;
+    }
+
     if (!is_readable($filepath)) {
       throw new FileNotReadableException($filepath);
     }
@@ -197,19 +203,23 @@ class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInterface
    * {@inheritdoc}
    */
   public function seek(int $offset): void {
-    $currentIndex = $this->reader->key();
-    if ($currentIndex !== $offset) {
-      if ($offset < $currentIndex || $currentIndex === NULL || $offset === 0) {
-        $this->rewind();
-      }
+    $currentIndex = $this->key();
 
-      while ($this->reader->valid() && ($offset > $this->reader->key())) {
-        $this->reader->next();
-      }
+    // Current key is already the one we're looking for. So we can safely stop.
+    if ($currentIndex === $offset) {
+      return;
+    }
 
-      if (!$this->reader->valid()) {
-        throw new \OutOfBoundsException('SpreadsheetError: Position ' . $offset . ' not found');
-      }
+    if ($offset < $currentIndex || $offset === 0) {
+      $this->rewind();
+    }
+
+    while ($this->valid() && ($offset > $this->key())) {
+      $this->next();
+    }
+
+    if (!$this->valid()) {
+      throw new \OutOfBoundsException('SpreadsheetError: Position ' . $offset . ' not found');
     }
   }
 

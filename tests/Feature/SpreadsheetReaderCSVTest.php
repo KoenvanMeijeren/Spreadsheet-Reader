@@ -5,6 +5,7 @@
  */
 
 use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
+use KoenVanMeijeren\SpreadsheetReader\Reader\SpreadsheetReaderInterface;
 use KoenVanMeijeren\SpreadsheetReader\SpreadsheetReader;
 
 it('can open a CSV file', function () {
@@ -117,7 +118,7 @@ it('can rewind the reader', function () {
   $this->assertSame($expectedHeaderRow, $reader->current());
 });
 
-it('can read a specific key', function () {
+it('can seek for a specific index', function () {
   // Arrange.
   $filepath = 'tests/MockData/file_example_CSV_5000.csv';
   $expectedRow = [
@@ -139,6 +140,42 @@ it('can read a specific key', function () {
   $this->assertSame(5, $reader->count());
   $this->assertSame(4, $reader->key());
   $this->assertSame($expectedRow, $reader->current());
+});
+
+it('does not rewind if the current position is already the desired key', function () {
+  // Arrange.
+  $filepath = 'tests/MockData/file_example_CSV_5000.csv';
+  $mocked_reader = Mockery::mock(SpreadsheetReaderInterface::class, [
+    'filepath' => $filepath,
+  ]);
+  $seek_index = 3;
+
+  // Act & assert.
+  $mocked_reader->shouldReceive('key')->andReturn($seek_index);
+  $mocked_reader->shouldReceive('valid')->never();
+  $mocked_reader->shouldReceive('rewind')->never();
+  $mocked_reader->shouldReceive('next')->never();
+
+  $reader = new SpreadsheetReader(filepath: '', reader: $mocked_reader);
+  $reader->seek($seek_index);
+
+  $this->assertSame($seek_index, $reader->key());
+
+  // Clean up.
+  Mockery::close();
+});
+
+it('can seek for non-existing indexes', function () {
+  // Arrange.
+  $filepath = 'tests/MockData/file_example_CSV_5000.csv';
+  $seek_index = 5300;
+
+  // Act & assert.
+  $this->expectException(OutOfBoundsException::class);
+  $this->expectExceptionMessage("SpreadsheetError: Position {$seek_index} not found");
+
+  $reader = new SpreadsheetReader($filepath);
+  $reader->seek($seek_index);
 });
 
 it('throws an exception for non-readable file', function () {

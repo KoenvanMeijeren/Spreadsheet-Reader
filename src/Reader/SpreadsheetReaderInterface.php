@@ -26,7 +26,7 @@ interface SpreadsheetReaderInterface extends \Iterator, \Countable {
    * the current sheet index is provided.
    *
    * @return bool
-   *    True if sheet could be changed to the specified one,
+   *   True if sheet could be changed to the specified one,
    *    false if not (for example, if incorrect index was provided).
    */
   public function changeSheet(int $index): bool;
