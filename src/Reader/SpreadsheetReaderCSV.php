@@ -3,6 +3,7 @@
 namespace KoenVanMeijeren\SpreadsheetReader\Reader;
 
 use KoenVanMeijeren\SpreadsheetReader\Config\SpreadsheetReaderCSVConfig;
+use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileEmptyException;
 use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
 
 /**
@@ -100,6 +101,11 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
     // Seeking the place right after BOM as the start of the real content.
     if ($this->bomLength) {
       fseek($this->handle, $this->bomLength);
+    }
+
+    $is_empty = feof($this->handle) && (trim(fread($this->handle, 1)) == '');
+    if ($is_empty) {
+      throw new FileEmptyException($filepath);
     }
 
     // Checking for the delimiter if it should be determined automatically.

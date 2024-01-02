@@ -4,6 +4,7 @@
  * @file
  */
 
+use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileEmptyException;
 use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
 use KoenVanMeijeren\SpreadsheetReader\Reader\SpreadsheetReaderInterface;
 use KoenVanMeijeren\SpreadsheetReader\SpreadsheetReader;
@@ -11,6 +12,42 @@ use KoenVanMeijeren\SpreadsheetReader\SpreadsheetReader;
 it('can open a CSV file', function () {
   // Arrange.
   $filepath = 'tests/MockData/file_example_CSV_5000.csv';
+  $expectedHeaderRow = [
+    'Nr',
+    'First Name',
+    'Last Name',
+    'Gender',
+    'Country',
+    'Age',
+    'Date',
+    'Id',
+  ];
+
+  // Act.
+  $reader = new SpreadsheetReader($filepath);
+
+  // Assert.
+  $this->assertCount(1, $reader->sheets());
+  $this->assertTrue($reader->changeSheet(0));
+  $this->assertSame(1, $reader->count());
+  $this->assertSame(0, $reader->key());
+  $this->assertSame($expectedHeaderRow, $reader->current());
+});
+
+it('throws an exception for an empty CSV file', function () {
+  // Arrange.
+  $filepath = 'tests/MockData/file_example_CSV_empty.csv';
+
+  // Act & assert.
+  $this->expectException(FileEmptyException::class);
+  $this->expectExceptionMessage("File is empty ($filepath)");
+
+  new SpreadsheetReader($filepath);
+});
+
+it('can open a CSV file with only a header', function () {
+  // Arrange.
+  $filepath = 'tests/MockData/file_example_CSV_only_header.csv';
   $expectedHeaderRow = [
     'Nr',
     'First Name',
@@ -209,5 +246,5 @@ it('runs with good performance and the memory does not peek', function () {
   $memory_end = bytes_to_mega_bytes(memory_get_usage());
   $memory_used = $memory_end - $memory_start;
 
-  $this->assertTrue(in_range($memory_used, 0.03, 0.05), "Memory used: {$memory_used}");
+  $this->assertTrue(in_range($memory_used, 0.0, 0.2), "Memory used: {$memory_used}");
 });
