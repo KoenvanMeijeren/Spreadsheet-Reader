@@ -1,6 +1,7 @@
 <?php
 namespace KoenVanMeijeren\SpreadsheetReader;
 
+use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
 use RuntimeException;
 
 /**
@@ -40,13 +41,15 @@ class SpreadsheetReaderCSV implements SpreadsheetReaderInterface
      * @param array $options Options:
      *    Enclosure => string CSV enclosure
      *    Separator => string CSV separator
+     *
+     * @throws FileNotReadableException
      */
     public function __construct(string $filepath, array $options = [])
     {
         $this->Filepath = $filepath;
 
         if (!is_readable($filepath)) {
-            throw new RuntimeException("File not readable ($filepath)");
+            throw new FileNotReadableException($filepath);
         }
 
         $this->Options = array_merge($this->Options, $options);
@@ -116,10 +119,9 @@ class SpreadsheetReaderCSV implements SpreadsheetReaderInterface
     }
 
     /**
-     * Returns information about sheets in the file.
-     * Because CSV doesn't have any, it's just a single entry.
+     * {@inheritdoc}
      *
-     * @return array Sheet data
+     * Because CSV doesn't have any, it's just a single entry.
      */
     public function sheets(): array
     {
@@ -127,11 +129,7 @@ class SpreadsheetReaderCSV implements SpreadsheetReaderInterface
     }
 
     /**
-     * Changes sheet to another. Because CSV doesn't have any sheets
-     *    it just rewinds the file so the behaviour is compatible with other
-     *    sheet readers. (If an invalid index is given, it doesn't do anything.)
-     *
-     * @param bool Status
+     * {@inheritdoc}
      */
     public function changeSheet(int $index): bool
     {
@@ -142,11 +140,8 @@ class SpreadsheetReaderCSV implements SpreadsheetReaderInterface
         return false;
     }
 
-    // !Iterator interface methods
-
     /**
-     * Rewind the Iterator to the first element.
-     * Similar to the reset() function for arrays in PHP
+     * {@inheritdoc}
      */
     public function rewind(): void
     {
@@ -170,10 +165,6 @@ class SpreadsheetReaderCSV implements SpreadsheetReaderInterface
         return $this->currentRow;
     }
 
-    /**
-     * Move forward to next element.
-     * Similar to the next() function for arrays in PHP
-     */
     public function next(): void
     {
         $this->currentRow = array();
@@ -182,16 +173,16 @@ class SpreadsheetReaderCSV implements SpreadsheetReaderInterface
         // Line breaks could be 0x0D 0x00 0x0A 0x00 and PHP could split lines on the
         //	first or the second linebreak, leaving unnecessary \0 characters that mess up
         //	the output.
-        if ($this->Encoding == 'UTF-16LE' || $this->Encoding == 'UTF-16BE') {
+        if ($this->Encoding === 'UTF-16LE' || $this->Encoding === 'UTF-16BE') {
             while (!feof($this->Handle)) {
                 // While bytes are insignificant whitespace, do nothing
-                $Char = ord(fgetc($this->Handle));
-                if (!$Char || $Char == 10 || $Char == 13) {
+                $character = ord(fgetc($this->Handle));
+                if ($character === 10 || $character === 13) {
                     continue;
                 }
 
                 // When significant bytes are found, step back to the last place before them
-                if ($this->Encoding == 'UTF-16LE') {
+                if ($this->Encoding === 'UTF-16LE') {
                     fseek($this->Handle, ftell($this->Handle) - 1);
                 } else {
                     fseek($this->Handle, ftell($this->Handle) - 2);
@@ -203,49 +194,30 @@ class SpreadsheetReaderCSV implements SpreadsheetReaderInterface
         $this->currentRowIndex++;
         $this->currentRow = fgetcsv($this->Handle, null, $this->Options['Delimiter'], $this->Options['Enclosure']);
 
-        if ($this->currentRow) {
-            // Converting multibyte unicode strings
-            // and trimming enclosure symbols off of them because those aren't recognized
-            // in the relevant encodings.
-            if ($this->Encoding != 'ASCII' && $this->Encoding != 'UTF-8') {
-                $Encoding = $this->Encoding;
-                foreach ($this->currentRow as $Key => $Value) {
-                    $this->currentRow[$Key] = trim(trim(
-                        mb_convert_encoding($Value, 'UTF-8', $this->Encoding),
-                        $this->Options['Enclosure']
-                    ));
-                }
-
+        // Converting multibyte unicode strings
+        // and trimming enclosure symbols off of them because those aren't recognized
+        // in the relevant encodings.
+        if ($this->currentRow && $this->Encoding !== 'ASCII' && $this->Encoding !== 'UTF-8') {
+            foreach ($this->currentRow as $Key => $Value) {
+                $this->currentRow[$Key] = trim(trim(
+                    mb_convert_encoding($Value, 'UTF-8', $this->Encoding),
+                    $this->Options['Enclosure']
+                ));
             }
+
         }
     }
 
-    /**
-     * Return the identifying key of the current element.
-     * Similar to the key() function for arrays in PHP
-     */
     public function key(): int
     {
         return $this->currentRowIndex;
     }
 
-    /**
-     * Check if there is a current element after calls to rewind() or next().
-     * Used to check if we've iterated to the end of the collection
-     *
-     * @return boolean FALSE if there's nothing more to iterate over
-     */
     public function valid(): bool
     {
         return ($this->currentRow || !feof($this->Handle));
     }
 
-    // !Countable interface method
-
-    /**
-     * Ostensibly should return the count of the contained items but this just returns the number
-     * of rows read so far. It's not really correct but at least coherent.
-     */
     public function count(): int
     {
         return $this->currentRowIndex + 1;
