@@ -30,6 +30,8 @@ class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInterface
    *   Filename (in case of an uploaded file), used to determine file type.
    * @param string|null $mimeType
    *   MIME type from an upload, used to determine file type, optional.
+   * @param \KoenVanMeijeren\SpreadsheetReader\Reader\SpreadsheetReaderInterface|null $reader
+   *   Optional reader to use.
    *
    * @throws \KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException
    */

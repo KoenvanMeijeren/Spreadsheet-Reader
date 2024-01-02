@@ -224,7 +224,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
    * {@inheritDoc}
    */
   public function valid(): bool {
-    return ($this->currentRow || !feof($this->handle));
+    return (!empty($this->currentRow) || !feof($this->handle));
   }
 
   /**
