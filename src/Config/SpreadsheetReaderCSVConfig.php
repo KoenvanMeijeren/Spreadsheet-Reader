@@ -2,7 +2,6 @@
 
 namespace KoenVanMeijeren\SpreadsheetReader\Config;
 
-
 /**
  * Provides a class for SpreadsheetReaderCSVConfigOptions.
  */
