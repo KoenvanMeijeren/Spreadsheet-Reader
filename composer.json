@@ -1,0 +1,25 @@
+{
+	"name": "develto-composer/spreadsheet-reader",
+	"description": "Spreadsheet reader library for Excel, OpenOffice and structured text files",
+	"keywords": ["spreadsheet", "xls", "xlsx", "ods", "csv", "excel", "openoffice"],
+	"homepage": "https://git.develto.nl/develto-composer/spreadsheet-reader",
+	"version": "1.0",
+	"time": "2023-07-17",
+	"type": "library",
+	"license": ["MIT"],
+	"require": {
+		"php": ">=8.0",
+		"ext-zip": "*",
+		"ext-xmlreader": "*",
+		"ext-simplexml": "*"
+    },
+	"autoload": {
+		"classmap": [
+			"./excel-reader/"
+		],
+		"psr-4": {
+			"Develto\\SpreadsheetReader\\": "src"
+		}
+
+	}
+}
