@@ -3,26 +3,18 @@
 namespace KoenVanMeijeren\SpreadsheetReader;
 
 use KoenVanMeijeren\SpreadsheetReader\Config\SpreadsheetReaderCSVConfig;
+use KoenVanMeijeren\SpreadsheetReader\Config\SpreadsheetReaderFileType;
 use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
 
 /**
  * Main class for spreadsheet reading.
  */
 class SpreadsheetReader implements \SeekableIterator, \Countable {
-  public const TYPE_XLSX = 'XLSX';
-  public const TYPE_XLS = 'XLS';
-  public const TYPE_CSV = 'CSV';
-  public const TYPE_ODS = 'ODS';
 
   /**
    * Handler for the file.
    */
   private SpreadsheetReaderInterface $reader;
-
-  /**
-   * Type of the contained spreadsheet.
-   */
-  private ?string $fileType = NULL;
 
   /**
    * Constructs the spreadsheet reader.
@@ -41,14 +33,12 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
       throw new FileNotReadableException($filepath);
     }
 
-    $this->determineAndSetFileType($filepath, $originalFilename, $mimeType);
-
-    $this->reader = match ($this->fileType) {
-      self::TYPE_XLSX => new SpreadsheetReaderXLSX($filepath),
-      self::TYPE_CSV => new SpreadsheetReaderCSV($filepath, new SpreadsheetReaderCSVConfig()),
-      self::TYPE_XLS => new SpreadsheetReaderXLS($filepath),
-      self::TYPE_ODS => new SpreadsheetReaderODS($filepath),
-      default => throw new \RuntimeException('No handler available for the given type: ' . $this->fileType),
+    $fileType = $this->getFileType($filepath, $originalFilename, $mimeType);
+    $this->reader = match ($fileType) {
+      SpreadsheetReaderFileType::XLSX => new SpreadsheetReaderXLSX($filepath),
+      SpreadsheetReaderFileType::CSV => new SpreadsheetReaderCSV($filepath, new SpreadsheetReaderCSVConfig()),
+      SpreadsheetReaderFileType::XLS => new SpreadsheetReaderXLS($filepath),
+      SpreadsheetReaderFileType::ODS => new SpreadsheetReaderODS($filepath),
     };
   }
 
@@ -62,18 +52,19 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
   /**
    * Determines the type of the file and sets it.
    */
-  private function determineAndSetFileType(string $filepath, ?string $originalFilename, ?string $mimeType): void {
+  private function getFileType(string $filepath, ?string $originalFilename, ?string $mimeType): SpreadsheetReaderFileType {
     if (!$originalFilename) {
       $originalFilename = $filepath;
     }
 
     $fileExtension = strtolower(pathinfo($originalFilename, PATHINFO_EXTENSION));
 
+    $fileType = NULL;
     switch ($mimeType) {
       case 'text/csv':
       case 'text/comma-separated-values':
       case 'text/plain':
-        $this->fileType = self::TYPE_CSV;
+        $fileType = SpreadsheetReaderFileType::CSV;
         break;
 
       case 'application/vnd.ms-excel':
@@ -86,22 +77,22 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
       case 'application/xlt':
       case 'application/x-xls':
         // Excel does weird stuff.
-        $this->fileType = self::TYPE_XLS;
+        $fileType = SpreadsheetReaderFileType::XLS;
         if (in_array($fileExtension, ['csv', 'tsv', 'txt'], TRUE)) {
-          $this->fileType = self::TYPE_CSV;
+          $fileType = SpreadsheetReaderFileType::CSV;
         }
         break;
 
       case 'application/vnd.oasis.opendocument.spreadsheet':
       case 'application/vnd.oasis.opendocument.spreadsheet-template':
-        $this->fileType = self::TYPE_ODS;
+        $fileType = SpreadsheetReaderFileType::ODS;
         break;
 
       case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
       case 'application/vnd.openxmlformats-officedocument.spreadsheetml.template':
       case 'application/xlsx':
       case 'application/xltx':
-        $this->fileType = self::TYPE_XLSX;
+        $fileType = SpreadsheetReaderFileType::XLSX;
         break;
 
       case 'application/xml':
@@ -109,32 +100,34 @@ class SpreadsheetReader implements \SeekableIterator, \Countable {
         break;
     }
 
-    if (!$this->fileType) {
-      $this->fileType = match ($fileExtension) {
-        'xlsx', 'xltx', 'xlsm', 'xltm' => self::TYPE_XLSX,
-        'xls', 'xlt' => self::TYPE_XLS,
-        'ods', 'odt' => self::TYPE_ODS,
-        default => self::TYPE_CSV,
+    if (!$fileType) {
+      $fileType = match ($fileExtension) {
+        'xlsx', 'xltx', 'xlsm', 'xltm' => SpreadsheetReaderFileType::XLSX,
+        'xls', 'xlt' => SpreadsheetReaderFileType::XLS,
+        'ods', 'odt' => SpreadsheetReaderFileType::ODS,
+        default => SpreadsheetReaderFileType::CSV,
       };
     }
 
-    // Pre-checking XLS files, in case they are renamed CSV or XLSX files.
-    if ($this->fileType === self::TYPE_XLS) {
+    // Pre-checking XLS files, in case they are renamed CSV or XLS  X files.
+    if ($fileType === SpreadsheetReaderFileType::XLS) {
       $this->reader = new SpreadsheetReaderXLS($filepath);
       if (!$this->reader->valid()) {
         $this->reader->__destruct();
 
         $zip = new \ZipArchive();
         $zip_file = $zip->open($filepath);
+
+        $fileType = SpreadsheetReaderFileType::CSV;
         if (is_resource($zip_file)) {
-          $this->fileType = self::TYPE_XLSX;
-          $zip->close();
+          $fileType = SpreadsheetReaderFileType::XLSX;
         }
-        else {
-          $this->fileType = self::TYPE_CSV;
-        }
+
+        $zip->close();
       }
     }
+
+    return $fileType;
   }
 
   /**
