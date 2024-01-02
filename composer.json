@@ -1,8 +1,8 @@
 {
-	"name": "develto-composer/spreadsheet-reader",
+	"name": "koenvanmeijeren/spreadsheet-reader",
 	"description": "Spreadsheet reader library for Excel, OpenOffice and structured text files",
 	"keywords": ["spreadsheet", "xls", "xlsx", "ods", "csv", "excel", "openoffice"],
-	"homepage": "https://git.develto.nl/develto-composer/spreadsheet-reader",
+	"homepage": "https://github.com/KoenvanMeijeren/Spreadsheet-Reader",
 	"version": "1.0",
 	"time": "2023-07-17",
 	"type": "library",
@@ -18,7 +18,7 @@
 			"./excel-reader/"
 		],
 		"psr-4": {
-			"Develto\\SpreadsheetReader\\": "src"
+			"KoenVanMeijeren\\SpreadsheetReader\\": "src"
 		}
 
 	}

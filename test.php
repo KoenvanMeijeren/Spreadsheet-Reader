@@ -3,7 +3,7 @@
  * XLS parsing uses php-excel-reader from http://code.google.com/p/php-excel-reader/
  */
 
-use Develto\SpreadsheetReader\SpreadsheetReader;
+use KoenVanMeijeren\SpreadsheetReader\SpreadsheetReader;
 
 header('Content-Type: text/plain');
 
@@ -17,19 +17,18 @@ header('Content-Type: text/plain');
 	}
 	else
 	{
-		if (php_sapi_name() === 'cli')
+		if (PHP_SAPI === 'cli')
 		{
 			echo 'Please specify filename as the first argument'.PHP_EOL;
+            exit;
 		}
-		else
-		{
-			echo 'Please specify filename as a HTTP GET parameter "File", e.g., "/test.php?File=test.xlsx"';
-		}
+
+        echo 'Please specify filename as a HTTP GET parameter "File", e.g., "/test.php?File=test.xlsx"';
 		exit;
 	}
 
 	// Excel reader from http://code.google.com/p/php-excel-reader/
-	require('src/excel_reader2.php');
+	require('excel-reader/excel_reader2.php');
 
 	date_default_timezone_set('UTC');
 
@@ -77,7 +76,7 @@ header('Content-Type: text/plain');
 				echo 'Memory: '.($CurrentMem - $BaseMem).' current, '.$CurrentMem.' base'.PHP_EOL;
 				echo '---------------------------------'.PHP_EOL;
 
-				if ($Key && ($Key % 500 == 0))
+				if ($Key && ($Key % 500 === 0))
 				{
 					echo '---------------------------------'.PHP_EOL;
 					echo 'Time: '.(microtime(true) - $Time);
@@ -99,4 +98,4 @@ header('Content-Type: text/plain');
 	{
 		echo $E -> getMessage();
 	}
-?>
+

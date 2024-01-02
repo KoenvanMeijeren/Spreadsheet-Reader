@@ -62,7 +62,7 @@ with each call. (Thanks to [osuwariboy](https://github.com/osuwariboy))
 	- The `Sheets()` method lets you retrieve a list of all sheets present in the file.
 	- `ChangeSheet($Index)` method changes the sheet in the reader to the one specified.
 
-- Previously temporary files that were extracted, were deleted after the Develto\SpreadsheetReader\SpreadsheetReader  
+- Previously temporary files that were extracted, were deleted after the KoenVanMeijeren\SpreadsheetReader\SpreadsheetReader  
 was destroyed but the empty directories remained. Now those are cleaned up as well.  
 
 ### v.0.4.3  2013-06-14

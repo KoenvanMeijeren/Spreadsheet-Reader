@@ -8,7 +8,7 @@ from http://code.google.com/p/php-excel-reader/ which, sadly, has memory issues 
 data all at once and keeps it all in memory.
 ### Installation
 ```shell
-composer require develto-composer/spreadsheet-reader --ignore-platform-reqs
+composer require koenvanmeijeren/spreadsheet-reader --ignore-platform-reqs
 ```
 
 ### Requirements:
@@ -23,7 +23,7 @@ For XLSX-file reading
 All data is read from the file sequentially, with each row being returned as a numeric array.
 This is about the easiest way to read a file:
 ```php
-$reader = new Develto\SpreadsheetReader\SpreadsheetReader('example.xlsx');
+$reader = new KoenVanMeijeren\SpreadsheetReader\SpreadsheetReader('example.xlsx');
 foreach ($reader as $row)
 {
 	print_r($row);
@@ -40,7 +40,7 @@ to the `changeSheet($Index)` method.
 Example:
 
 ```php
-$reader = new Develto\SpreadsheetReader\SpreadsheetReader('example.xlsx');
+$reader = new KoenVanMeijeren\SpreadsheetReader\SpreadsheetReader('example.xlsx');
 $sheets = $reader->sheets();
 foreach ($sheets as $index => $name) {
 	echo 'Sheet #'.$index.': '.$name;
@@ -73,7 +73,7 @@ In the browser: `http://path-to-library/test.php?File=/path/to/spreadsheet.xls`
 	sometimes Excel may put all, or nearly all the strings from the spreadsheet in the shared string file (which is a separate XML text), and not necessarily in the same
 	order. The Worst case scenario is when it is in reverse order — for each string we need to parse the shared string XML from the beginning if we want to avoid keeping the data in memory.
 	To that end, the XLSX parser has a cache for shared strings that is used if the total shared string count is not too high. In case you get out of memory errors, you can
-	try adjusting the *SHARED_STRING_CACHE_LIMIT* constant in Develto\SpreadsheetReader\SpreadsheetReader_XLSX to a lower one.
+	try adjusting the *SHARED_STRING_CACHE_LIMIT* constant in KoenVanMeijeren\SpreadsheetReader\SpreadsheetReader_XLSX to a lower one.
 
 ### TODOs:
 *  ODS date formats;
