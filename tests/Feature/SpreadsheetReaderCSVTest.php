@@ -188,3 +188,26 @@ it('throws an exception for non-readable file', function () {
 
   new SpreadsheetReader($nonExistentFilepath);
 });
+
+it('runs with good performance and the memory does not peek', function () {
+  // Arrange.
+  $filepath = 'tests/MockData/file_example_CSV_5000.csv';
+  $memory_start = bytes_to_mega_bytes(memory_get_usage());
+
+  // Act.
+  $reader = new SpreadsheetReader($filepath);
+  while ($reader->valid()) {
+      $reader->next();
+    if (!$reader->valid()) {
+        break;
+    }
+
+      $this->assertNotEmpty($reader->current());
+  }
+
+  // Assert.
+  $memory_end = bytes_to_mega_bytes(memory_get_usage());
+  $memory_used = $memory_end - $memory_start;
+
+  $this->assertTrue(in_range($memory_used, 0.03, 0.05), "Memory used: {$memory_used}");
+});

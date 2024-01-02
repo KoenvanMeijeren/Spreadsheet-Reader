@@ -42,3 +42,19 @@ expect()->extend('toBeOne', function () {
 | of lines of code in your test files.
 |
  */
+
+/**
+ * Converts the bytes to megabytes.
+ */
+function bytes_to_mega_bytes(int $bytes, int $decimals = 2): float {
+  return round($bytes / 1024 / 1024, $decimals);
+}
+
+/**
+ * Determines if $number is between $min and $max.
+ */
+function in_range(int|float $number, int|float $min, int|float $max, bool $inclusive = FALSE): bool {
+  return $inclusive
+    ? ($number >= $min && $number <= $max)
+    : ($number > $min && $number < $max);
+}
