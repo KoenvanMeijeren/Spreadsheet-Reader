@@ -11,7 +11,7 @@ use KoenVanMeijeren\SpreadsheetReader\SpreadsheetReader;
 
 it('can open a CSV file', function () {
   // Arrange.
-  $filepath = 'tests/MockData/file_example_CSV_5000.csv';
+  $filepath = get_mock_data_filepath('file_example_CSV_5000.csv');
   $expectedHeaderRow = [
     'Nr',
     'First Name',
@@ -36,7 +36,7 @@ it('can open a CSV file', function () {
 
 it('throws an exception for an empty CSV file', function () {
   // Arrange.
-  $filepath = 'tests/MockData/file_example_CSV_empty.csv';
+  $filepath = get_mock_data_filepath('file_example_CSV_empty.csv');
 
   // Act & assert.
   $this->expectException(FileEmptyException::class);
@@ -47,7 +47,7 @@ it('throws an exception for an empty CSV file', function () {
 
 it('can open a CSV file with only a header', function () {
   // Arrange.
-  $filepath = 'tests/MockData/file_example_CSV_only_header.csv';
+  $filepath = get_mock_data_filepath('file_example_CSV_only_header.csv');
   $expectedHeaderRow = [
     'Nr',
     'First Name',
@@ -72,7 +72,7 @@ it('can open a CSV file with only a header', function () {
 
 it('can traverse through the CSV file', function () {
   // Arrange.
-  $filepath = 'tests/MockData/file_example_CSV_5000.csv';
+  $filepath = get_mock_data_filepath('file_example_CSV_5000.csv');
   $expectedHeaderRow = [
     'Nr',
     'First Name',
@@ -121,7 +121,7 @@ it('can traverse through the CSV file', function () {
 
 it('can rewind the reader', function () {
   // Arrange.
-  $filepath = 'tests/MockData/file_example_CSV_5000.csv';
+  $filepath = get_mock_data_filepath('file_example_CSV_5000.csv');
   $expectedHeaderRow = [
     'Nr',
     'First Name',
@@ -157,7 +157,7 @@ it('can rewind the reader', function () {
 
 it('can seek for a specific index', function () {
   // Arrange.
-  $filepath = 'tests/MockData/file_example_CSV_5000.csv';
+  $filepath = get_mock_data_filepath('file_example_CSV_5000.csv');
   $expectedRow = [
     '3',
     'Philip',
@@ -181,7 +181,7 @@ it('can seek for a specific index', function () {
 
 it('does not rewind if the current position is already the desired key', function () {
   // Arrange.
-  $filepath = 'tests/MockData/file_example_CSV_5000.csv';
+  $filepath = get_mock_data_filepath('file_example_CSV_5000.csv');
   $mocked_reader = Mockery::mock(SpreadsheetReaderInterface::class, [
     'filepath' => $filepath,
   ]);
@@ -204,7 +204,7 @@ it('does not rewind if the current position is already the desired key', functio
 
 it('can seek for non-existing indexes', function () {
   // Arrange.
-  $filepath = 'tests/MockData/file_example_CSV_5000.csv';
+  $filepath = get_mock_data_filepath('file_example_CSV_5000.csv');
   $seek_index = 5300;
 
   // Act & assert.
@@ -228,7 +228,7 @@ it('throws an exception for non-readable file', function () {
 
 it('runs with good performance and the memory does not peek', function () {
   // Arrange.
-  $filepath = 'tests/MockData/file_example_CSV_5000.csv';
+  $filepath = get_mock_data_filepath('file_example_CSV_5000.csv');
   $memory_start = bytes_to_mega_bytes(memory_get_usage());
 
   // Act.

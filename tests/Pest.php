@@ -46,6 +46,13 @@ expect()->extend('toBeOne', function () {
  */
 
 /**
+ * Returns the path to the mock data file.
+ */
+function get_mock_data_filepath(string $filepath): string {
+  return "tests/MockData/{$filepath}";
+}
+
+/**
  * Converts the bytes to megabytes.
  */
 function bytes_to_mega_bytes(int $bytes, int $decimals = 2): float {
