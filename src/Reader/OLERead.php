@@ -83,7 +83,7 @@ final class OLERead {
       $this->error = 1;
       return FALSE;
     }
-    $this->data = @file_get_contents($filename);
+    $this->data = file_get_contents($filename);
     if (!$this->data) {
       $this->error = 1;
       return FALSE;

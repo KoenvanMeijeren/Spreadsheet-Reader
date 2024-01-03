@@ -145,6 +145,14 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
   }
 
   /**
+   * Destructor, destroys all that remains (closes and deletes temp files)
+   */
+  public function __destruct() {
+    fclose($this->handle);
+    unset($this->handle);
+  }
+
+  /**
    * {@inheritDoc}
    */
   public function sheets(): array {

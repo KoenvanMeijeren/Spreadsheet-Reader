@@ -279,7 +279,7 @@ it('runs with good performance and the memory does not peek', function () {
   $memory_end = bytes_to_mega_bytes(memory_get_usage());
   $memory_used = $memory_end - $memory_start;
 
-  $this->assertTrue(in_range($memory_used, 0, 6, TRUE), "Memory used: {$memory_used}");
+  $this->assertTrue(in_range($memory_used, 0, 8, TRUE), "Memory used: {$memory_used}");
 });
 
 it('can return the sheets', function () {

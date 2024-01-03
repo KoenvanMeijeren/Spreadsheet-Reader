@@ -157,7 +157,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
 
     $this->sharedStringsPath = $this->tempDir . 'xl' . DIRECTORY_SEPARATOR . 'sharedStrings.xml';
     $zip->extractTo($this->tempDir, 'xl/sharedStrings.xml');
-    $this->tempFiles[] = $this->tempDir . 'xl' . DIRECTORY_SEPARATOR . 'sharedStrings.xml';
+    $this->tempFiles[] = $this->sharedStringsPath;
 
     if (!is_readable($this->sharedStringsPath)) {
       throw new XMLSharedStringsNotReadableException($this->sharedStringsPath);
@@ -189,19 +189,20 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
    * Destructor, destroys all that remains (closes and deletes temp files)
    */
   public function __destruct() {
-    foreach ($this->tempFiles as $tempFile) {
-      @unlink($tempFile);
-    }
-
-    // Better safe than sorry - shouldn't try deleting '.' or '/', or '..'.
-    if (strlen($this->tempDir) > 2) {
-      @rmdir($this->tempDir . 'xl' . DIRECTORY_SEPARATOR . 'worksheets');
-      @rmdir($this->tempDir . 'xl');
-      @rmdir($this->tempDir);
-    }
-
     $this->worksheet->close();
     $this->sharedStrings->close();
+
+    foreach ($this->tempFiles as $tempFile) {
+      if (!file_exists($tempFile)) {
+        continue;
+      }
+
+      unlink($tempFile);
+    }
+
+    rmdir($this->tempDir . 'xl' . DIRECTORY_SEPARATOR . 'worksheets');
+    rmdir($this->tempDir . 'xl');
+    rmdir($this->tempDir);
 
     unset($this->worksheet, $this->worksheetPath, $this->sharedStrings, $this->sharedStringsPath, $this->workbookXML);
   }
@@ -233,6 +234,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
     }
 
     $tempWorksheetPath = $this->tempDir . 'xl/worksheets/sheet' . $realSheetIndex . '.xml';
+    $this->tempFiles[] = $tempWorksheetPath;
 
     if ($realSheetIndex === FALSE || !is_readable($tempWorksheetPath)) {
       throw new \OutOfBoundsException("SpreadsheetError: Position {$index} not found!");
