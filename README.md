@@ -6,19 +6,20 @@ or I/O-efficient, but at least it won't run out of memory (except maybe for XLS 
 So far, XLSX, ODS and text/CSV file parsing should be memory-efficient. XLS file parsing is done with php-excel-reader
 from http://code.google.com/p/php-excel-reader/ which, sadly, has memory issues with bigger spreadsheets, as it reads the
 data all at once and keeps it all in memory.
-### Installation
+
+## Installation
 ```shell
 composer require koenvanmeijeren/spreadsheet-reader --ignore-platform-reqs
 ```
 
-### Requirements:
+## Requirements:
 * PHP 8.0 or newer
 * PHP must have Zip file support (see http://php.net/manual/en/zip.installation.php)
 
 For XLSX-file reading
 * PHP must have Simple XML & XML read support
 
-### Usage:
+## Usage:
 
 All data is read from the file sequentially, with each row being returned as a numeric array.
 This is about the easiest way to read a file:
@@ -56,14 +57,14 @@ foreach ($sheets as $index => $name) {
 If a sheet is changed to the same that is currently open, the position in the file still reverts to the beginning, so as to conform
 to the same behavior as when changed to a different sheet.
 
-### Testing
+## Testing
 
 From the command line:
 ```shell
 composer run test
 ```
 
-#### Test coverage
+### Test coverage
 
 Start the docker contains and enter the container:
 ```shell
@@ -71,10 +72,42 @@ docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 docker-compose -f docker-compose.yml -f docker-compose.dev.yml exec php /bin/bash
 ```
 
-Run the tests:
+Run the tests with coverage generation:
 ```shell
 composer run pest:coverage
 ```
+
+### Running Benchmarks
+
+#### Run Benchmark Tests
+
+To execute the benchmark tests, use the following command:
+```shell
+composer run benchmark
+```
+
+This command runs the benchmarks with the default configuration and generates a default report.
+
+#### Run Benchmark Baseline
+
+To establish a baseline for comparison, run the following command:
+```shell
+composer run benchmark:baseline
+```
+
+This command runs the benchmarks and tags the results
+as the baseline for future comparisons.
+
+#### Run Benchmark Test Report
+
+To generate an aggregate report comparing the current benchmarks
+with the baseline, run:
+```shell
+composer run benchmark:test
+```
+
+This command provides insights into the performance changes
+between the baseline and the current state.
 
 ### Notes about library performance
 *  CSV and text files are read strictly sequentially so performance should be O(n);

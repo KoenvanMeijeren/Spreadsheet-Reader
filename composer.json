@@ -40,6 +40,18 @@
             "Composer\\Config::disableProcessTimeout",
             "vendor/bin/phpmd src text phpmd.xml"
         ],
+        "benchmark": [
+            "Composer\\Config::disableProcessTimeout",
+            "./vendor/bin/phpbench run tests/Benchmark --report=default"
+        ],
+        "benchmark:baseline": [
+            "Composer\\Config::disableProcessTimeout",
+            "./vendor/bin/phpbench run tests/Benchmark --tag=original --report=default"
+        ],
+        "benchmark:test": [
+            "Composer\\Config::disableProcessTimeout",
+            "./vendor/bin/phpbench run tests/Benchmark --ref=original --report=aggregate"
+        ],
         "test": [
             "composer run phpcs",
             "composer run phpstan",
@@ -58,8 +70,12 @@
 		"psr-4": {
 			"KoenVanMeijeren\\SpreadsheetReader\\": "src"
 		}
-
 	},
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\Benchmark\\": "tests/Benchmark"
+        }
+    },
 	"require-dev": {
 		"pestphp/pest": "^2.30",
 		"squizlabs/php_codesniffer": "^3.8",
@@ -76,7 +92,8 @@
 		"phpstan/phpstan-strict-rules": "^1.5",
 		"thecodingmachine/phpstan-strict-rules": "^1.0",
 		"ergebnis/phpstan-rules": "^2.1",
-		"phpmd/phpmd": "^2.15"
+		"phpmd/phpmd": "^2.15",
+		"phpbench/phpbench": "^1.2"
 	},
 	"config": {
 		"allow-plugins": {
