@@ -180,8 +180,6 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
    * {@inheritDoc}
    */
   public function next(): void {
-    $this->currentRow = [];
-
     // Finding the place the next line starts for UTF-16 encoded files.
     // Line breaks could be 0x0D 0x00 0x0A 0x00 and PHP could split lines on the
     // first or the second linebreak, leaving unnecessary \0 characters that
