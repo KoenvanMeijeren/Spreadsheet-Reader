@@ -200,7 +200,6 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
       unlink($tempFile);
     }
 
-    // Better safe than sorry - shouldn't try deleting '.' or '/', or '..'.
     rmdir($this->tempDir . 'xl' . DIRECTORY_SEPARATOR . 'worksheets');
     rmdir($this->tempDir . 'xl');
     rmdir($this->tempDir);
