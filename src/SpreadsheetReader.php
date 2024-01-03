@@ -187,7 +187,6 @@ final class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInt
    */
   public function key(): int {
     return $this->reader->key();
-
   }
 
   /**
