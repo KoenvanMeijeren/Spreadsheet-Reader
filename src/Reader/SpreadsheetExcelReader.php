@@ -321,7 +321,7 @@ final class SpreadsheetExcelReader {
   /**
    * Constructs a new instance.
    */
-  public function __construct(string $file = '', bool $store_extended_info = TRUE, string $outputEncoding = '') {
+  public function __construct(string $file = '', bool $shouldStoreExtendedInfo = TRUE, string $outputEncoding = '') {
     $this->oleRead = new OLERead();
 
     $this->setUtfEncoder();
@@ -335,7 +335,7 @@ final class SpreadsheetExcelReader {
       $this->colIndexes[$index] = $name;
     }
 
-    $this->shouldStoreExtendedInfo = $store_extended_info;
+    $this->shouldStoreExtendedInfo = $shouldStoreExtendedInfo;
     if ($file !== "") {
       $this->read($file);
     }

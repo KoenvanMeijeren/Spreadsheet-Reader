@@ -36,10 +36,15 @@
             "Composer\\Config::disableProcessTimeout",
             "vendor/bin/phpstan analyse --xdebug --memory-limit=-1"
         ],
+        "phpmd": [
+            "Composer\\Config::disableProcessTimeout",
+            "vendor/bin/phpmd src text phpmd.xml"
+        ],
         "test": [
             "composer run phpcs",
-            "composer run pest",
-            "composer run phpstan"
+            "composer run phpstan",
+            "composer run phpmd",
+            "composer run pest"
         ]
 	},
 	"require": {
@@ -70,7 +75,8 @@
 		"spaze/phpstan-disallowed-calls": "^3.0",
 		"phpstan/phpstan-strict-rules": "^1.5",
 		"thecodingmachine/phpstan-strict-rules": "^1.0",
-		"ergebnis/phpstan-rules": "^2.1"
+		"ergebnis/phpstan-rules": "^2.1",
+		"phpmd/phpmd": "^2.15"
 	},
 	"config": {
 		"allow-plugins": {
