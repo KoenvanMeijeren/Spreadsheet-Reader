@@ -48,3 +48,8 @@ jobs:
 
     - name: Run pest tests
       run: composer run pest
+
+    - name: Run benchmark tests
+      run: |
+        composer run benchmark:baseline
+        composer run benchmark:test
