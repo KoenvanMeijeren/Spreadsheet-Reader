@@ -428,7 +428,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
           $currentRowColumnCount = 0;
           if ($rowSpans) {
             $rowSpans = explode(':', $rowSpans);
-            $currentRowColumnCount = $rowSpans[1];
+            $currentRowColumnCount = (int) ($rowSpans[1] ?? 0);
           }
 
           if ($currentRowColumnCount > 0) {

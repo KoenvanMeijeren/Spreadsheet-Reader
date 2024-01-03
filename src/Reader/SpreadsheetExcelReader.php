@@ -82,9 +82,9 @@ function get_int4d(string $data, int $pos): int {
 /**
  * Http://uk.php.net/manual/en/function.getdate.php.
  */
-function gm_get_date(?int $ts = NULL): array {
+function gm_get_date(int|float|NULL $ts = NULL): array {
   $k = ['seconds', 'minutes', 'hours', 'mday', 'wday', 'mon', 'year', 'yday', 'weekday', 'month', 0];
-  return (array_combine($k, explode(":", gmdate('s:i:G:j:w:n:Y:z:l:F:U', !$ts ? time() : $ts))));
+  return (array_combine($k, explode(":", gmdate('s:i:G:j:w:n:Y:z:l:F:U', !$ts ? time() : (int) $ts))));
 }
 
 /**
@@ -1767,8 +1767,8 @@ final class SpreadsheetExcelReader {
       $totalseconds = floor(SPREADSHEET_EXCEL_READER_MSINADAY * $fractionalDay);
       $secs = $totalseconds % 60;
       $totalseconds -= $secs;
-      $hours = floor($totalseconds / (60 * 60));
-      $mins = floor($totalseconds / 60) % 60;
+      $hours = (int) floor($totalseconds / (60 * 60));
+      $mins = (int) floor($totalseconds / 60) % 60;
       $string = date($format, mktime($hours, $mins, $secs, $dateinfo["mon"], $dateinfo["mday"], $dateinfo["year"]));
     }
     elseif ($type === 'number') {

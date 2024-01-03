@@ -165,7 +165,7 @@ final class OLERead {
   /**
    * Read the data.
    */
-  public function readData(string $bl): string {
+  public function readData(int $bl): string {
     $block = $bl;
     $data = '';
     while ($block !== -2) {
