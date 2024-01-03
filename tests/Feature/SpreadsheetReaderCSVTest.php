@@ -234,12 +234,12 @@ it('runs with good performance and the memory does not peek', function () {
   // Act.
   $reader = new SpreadsheetReader($filepath);
   while ($reader->valid()) {
-      $reader->next();
+    $reader->next();
     if (!$reader->valid()) {
         break;
     }
 
-      $this->assertNotEmpty($reader->current());
+    $this->assertNotEmpty($reader->current());
   }
 
   // Assert.
