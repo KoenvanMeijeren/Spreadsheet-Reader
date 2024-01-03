@@ -24,6 +24,7 @@ jobs:
 
     - name: Install Xdebug
       run: |
+        sudo chown -R $USER:$USER /usr/lib/php/
         pecl install xdebug
         echo "zend_extension=$(find /usr/lib/php/ -name xdebug.so)" | sudo tee -a $(php -i | grep "Loaded Configuration File" | sed -e 's|.* => \(.*\)|\1|') > /dev/null
         echo "xdebug.remote_enable=on" | sudo tee -a $(php -i | grep "Loaded Configuration File" | sed -e 's|.* => \(.*\)|\1|') > /dev/null
