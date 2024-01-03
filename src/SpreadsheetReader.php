@@ -15,7 +15,7 @@ use KoenVanMeijeren\SpreadsheetReader\Reader\SpreadsheetReaderXLSX;
 /**
  * Main class for spreadsheet reading.
  */
-class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInterface {
+final class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInterface {
 
   /**
    * Handler for the file.
