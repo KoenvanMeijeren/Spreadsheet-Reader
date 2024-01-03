@@ -55,6 +55,16 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
   private bool $isValid = FALSE;
 
   /**
+   * Temporary directory path.
+   */
+  private string $tempDir;
+
+  /**
+   * Temporary files created by this class.
+   */
+  private array $tempFiles = [];
+
+  /**
    * Constructs a new spreadsheet reader for ODS files.
    */
   public function __construct(string $filepath) {
@@ -65,6 +75,7 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
     $temporaryDirectoryPath = sys_get_temp_dir();
     $temporaryDirectoryPath = rtrim($temporaryDirectoryPath, DIRECTORY_SEPARATOR);
     $temporaryDirectoryPath .= DIRECTORY_SEPARATOR . uniqid('', TRUE) . DIRECTORY_SEPARATOR;
+    $this->tempDir = $temporaryDirectoryPath;
 
     $zip = new \ZipArchive();
     $zipStatus = $zip->open($filepath);
@@ -75,6 +86,7 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
     if ($zip->locateName('content.xml') !== FALSE) {
       $zip->extractTo($temporaryDirectoryPath, 'content.xml');
       $this->contentPath = $temporaryDirectoryPath . 'content.xml';
+      $this->tempFiles[] = $this->contentPath;
     }
 
     $zip->close();
@@ -92,6 +104,14 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
     if ($this->content instanceof \XMLReader) {
       $this->content->close();
       unset($this->content);
+    }
+
+    foreach ($this->tempFiles as $tempFile) {
+      @unlink($tempFile);
+    }
+
+    if (file_exists($this->tempDir)) {
+      @rmdir($this->tempDir);
     }
 
     if (file_exists($this->contentPath)) {
