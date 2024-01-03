@@ -118,15 +118,19 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
     unset($this->content);
 
     foreach ($this->tempFiles as $tempFile) {
-      @unlink($tempFile);
+      if (!file_exists($tempFile)) {
+        continue;
+      }
+
+      unlink($tempFile);
     }
 
     if (file_exists($this->tempDir)) {
-      @rmdir($this->tempDir);
+      rmdir($this->tempDir);
     }
 
     if (file_exists($this->contentPath)) {
-      @unlink($this->contentPath);
+      unlink($this->contentPath);
       unset($this->contentPath);
     }
   }
