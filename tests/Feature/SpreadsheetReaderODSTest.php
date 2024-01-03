@@ -29,13 +29,12 @@ it('can open an ODS file', function () {
 
   // Assert.
   $this->assertCount(1, $reader->sheets());
-  $this->assertTrue($reader->changeSheet(0));
   $this->assertSame(1, $reader->count());
   $this->assertSame(0, $reader->key());
   $this->assertSame($expectedHeaderRow, $reader->current());
 });
 
-it('throws an exception for an empty ODS file', function () {
+it('can open an empty ODS file', function () {
   // Arrange.
   $filepath = get_mock_data_filepath('file_example_ODS_empty.ods');
   $expectedHeaderRow = [
@@ -47,7 +46,6 @@ it('throws an exception for an empty ODS file', function () {
 
   // Assert.
   $this->assertCount(1, $reader->sheets());
-  $this->assertTrue($reader->changeSheet(0));
   $this->assertSame(1, $reader->count());
   $this->assertSame(0, $reader->key());
   $this->assertSame($expectedHeaderRow, $reader->current());
@@ -73,7 +71,6 @@ it('can open an ODS file with only a header', function () {
 
   // Assert.
   $this->assertCount(1, $reader->sheets());
-  $this->assertTrue($reader->changeSheet(0));
   $this->assertSame(1, $reader->count());
   $this->assertSame(0, $reader->key());
   $this->assertSame($expectedHeaderRow, $reader->current());
@@ -111,7 +108,6 @@ it('can traverse through the ODS file', function () {
 
   // Assert.
   $this->assertCount(1, $reader->sheets());
-  $this->assertTrue($reader->changeSheet(0));
   $this->assertSame(1, $reader->count());
   $this->assertSame(0, $reader->key());
   $this->assertSame($expectedHeaderRow, $reader->current());
@@ -150,7 +146,6 @@ it('can rewind the reader', function () {
 
   // Assert.
   $this->assertCount(1, $reader->sheets());
-  $this->assertTrue($reader->changeSheet(0));
   $this->assertSame(1, $reader->count());
   $this->assertSame(0, $reader->key());
   $this->assertSame($expectedHeaderRow, $reader->current());
