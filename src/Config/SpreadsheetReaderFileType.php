@@ -10,4 +10,5 @@ enum SpreadsheetReaderFileType: string {
   case XLS = 'XLS';
   case CSV = 'CSV';
   case ODS = 'ODS';
+  case UNSUPPORTED = 'UNSUPPORTED';
 }

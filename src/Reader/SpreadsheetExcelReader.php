@@ -424,11 +424,6 @@ final class SpreadsheetExcelReader {
   private string $encoderFunction;
 
   /**
-   * The version.
-   */
-  private int $version;
-
-  /**
    * The nineteeen four.
    */
   private bool $nineteenFour;
@@ -1088,8 +1083,6 @@ final class SpreadsheetExcelReader {
     $version = v($data, $pos + 4);
     $substreamType = v($data, $pos + 6);
 
-    $this->version = $version;
-
     if (($version !== SPREADSHEET_EXCEL_READER_BIFF8) &&
     ($version !== SPREADSHEET_EXCEL_READER_BIFF7)) {
       return FALSE;
@@ -1119,7 +1112,7 @@ final class SpreadsheetExcelReader {
               $opcode = v($data, $spos);
               $conlength = v($data, $spos + 2);
               if ($opcode !== 0x3c) {
-                return -1;
+                return FALSE;
               }
               $spos += 4;
               $limitpos = $spos + $conlength;
@@ -1162,7 +1155,7 @@ final class SpreadsheetExcelReader {
                 $opcode = v($data, $spos);
                 $conlength = v($data, $spos + 2);
                 if ($opcode !== 0x3c) {
-                  return -1;
+                  return FALSE;
                 }
                 $spos += 4;
                 $limitpos = $spos + $conlength;
@@ -1408,6 +1401,7 @@ final class SpreadsheetExcelReader {
           $rec_offset = $this->getInt4d($data, $pos + 4);
           $rec_length = ord($data[$pos + 10]);
 
+          $rec_name = substr($data, $pos + 11, $rec_length);
           if ($version === SPREADSHEET_EXCEL_READER_BIFF8) {
             $chartype = ord($data[$pos + 11]);
             if ($chartype === 0) {
@@ -1417,12 +1411,8 @@ final class SpreadsheetExcelReader {
               $rec_name = $this->encodeUtf16(substr($data, $pos + 12, $rec_length * 2));
             }
           }
-          elseif ($version === SPREADSHEET_EXCEL_READER_BIFF7) {
-            $rec_name = substr($data, $pos + 11, $rec_length);
-          }
           $this->boundSheets[] = ['name' => $rec_name, 'offset' => $rec_offset];
           break;
-
       }
 
       $pos += $length + 4;
@@ -1617,6 +1607,7 @@ final class SpreadsheetExcelReader {
             $retstr = substr($data, $xpos, $len);
             $retstr = ($asciiEncoding) ? $retstr : $this->encodeUtf16($retstr);
           }
+          // @phpstan-ignore-next-line
           elseif ($version === SPREADSHEET_EXCEL_READER_BIFF7) {
             // Simple byte string.
             $xpos = $spos;

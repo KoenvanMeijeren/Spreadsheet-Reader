@@ -5,6 +5,7 @@ namespace KoenVanMeijeren\SpreadsheetReader;
 use KoenVanMeijeren\SpreadsheetReader\Config\SpreadsheetReaderCSVConfig;
 use KoenVanMeijeren\SpreadsheetReader\Config\SpreadsheetReaderFileType;
 use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
+use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileTypeUnsupportedException;
 use KoenVanMeijeren\SpreadsheetReader\Reader\SpreadsheetReaderCSV;
 use KoenVanMeijeren\SpreadsheetReader\Reader\SpreadsheetReaderInterface;
 use KoenVanMeijeren\SpreadsheetReader\Reader\SpreadsheetReaderODS;
@@ -49,9 +50,10 @@ class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInterface
     $fileType = $this->getFileType($filepath, $originalFilename, $mimeType);
     $this->reader = match ($fileType) {
       SpreadsheetReaderFileType::XLSX => new SpreadsheetReaderXLSX($filepath),
-      SpreadsheetReaderFileType::CSV => new SpreadsheetReaderCSV($filepath, new SpreadsheetReaderCSVConfig()),
       SpreadsheetReaderFileType::XLS => new SpreadsheetReaderXLS($filepath),
       SpreadsheetReaderFileType::ODS => new SpreadsheetReaderODS($filepath),
+      SpreadsheetReaderFileType::CSV => new SpreadsheetReaderCSV($filepath, new SpreadsheetReaderCSVConfig()),
+      default => throw new FileTypeUnsupportedException($mimeType),
     };
   }
 
@@ -118,7 +120,8 @@ class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInterface
         'xlsx', 'xltx', 'xlsm', 'xltm' => SpreadsheetReaderFileType::XLSX,
         'xls', 'xlt' => SpreadsheetReaderFileType::XLS,
         'ods', 'odt' => SpreadsheetReaderFileType::ODS,
-        default => SpreadsheetReaderFileType::CSV,
+        'csv' => SpreadsheetReaderFileType::CSV,
+        default => SpreadsheetReaderFileType::UNSUPPORTED,
       };
     }
 

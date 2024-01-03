@@ -245,7 +245,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
       }
     }
 
-    if (!$this->sharedStringCount || (self::SHARED_STRING_CACHE_LIMIT < $this->sharedStringCount && self::SHARED_STRING_CACHE_LIMIT !== NULL)) {
+    if (!$this->sharedStringCount || self::SHARED_STRING_CACHE_LIMIT < $this->sharedStringCount) {
       return;
     }
 
@@ -278,7 +278,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
    * Retrieves a shared string value by its index.
    */
   private function getSharedString(int $index): string {
-    if ((self::SHARED_STRING_CACHE_LIMIT === NULL || self::SHARED_STRING_CACHE_LIMIT > 0) && !empty($this->sharedStringCache)) {
+    if (!empty($this->sharedStringCache)) {
       return ($this->sharedStringCache[$index] ?? '');
     }
 
@@ -296,7 +296,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
     if ($this->sharedStringIndex === 0 && !$this->sharedStringCount) {
       while ($this->sharedStrings->read()) {
         if ($this->sharedStrings->name === 'sst') {
-          $this->sharedStringCount = $this->sharedStrings->getAttribute('uniqueCount');
+          $this->sharedStringCount = (int) $this->sharedStrings->getAttribute('uniqueCount');
           break;
         }
       }
@@ -551,13 +551,13 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
       $ord = (ord($letter[$i]) - 64);
       if ($ord > 26) {
         // Something is very, very wrong.
-        return FALSE;
+        return 0;
       }
 
       $result += ($ord * (26 ** $j));
     }
 
-    return ($result - 1);
+    return $result - 1;
   }
 
 }
