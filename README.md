@@ -60,10 +60,21 @@ to the same behavior as when changed to a different sheet.
 
 From the command line:
 ```shell
-php test.php path-to-spreadsheet.xls
+composer run test
 ```
 
-In the browser: `http://path-to-library/test.php?File=/path/to/spreadsheet.xls`
+#### Test coverage
+
+Start the docker contains and enter the container:
+```shell
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml exec php /bin/bash
+```
+
+Run the tests:
+```shell
+composer run pest:coverage
+```
 
 ### Notes about library performance
 *  CSV and text files are read strictly sequentially so performance should be O(n);

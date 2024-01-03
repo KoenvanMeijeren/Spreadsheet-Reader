@@ -22,6 +22,14 @@ jobs:
       with:
         php-version: '8.3'
 
+    - name: Install Xdebug
+      run: |
+        pecl install xdebug
+        echo "zend_extension=$(find /usr/lib/php/ -name xdebug.so)" | sudo tee -a $(php -i | grep "Loaded Configuration File" | sed -e 's|.* => \(.*\)|\1|') > /dev/null
+        echo "xdebug.remote_enable=on" | sudo tee -a $(php -i | grep "Loaded Configuration File" | sed -e 's|.* => \(.*\)|\1|') > /dev/null
+        echo "xdebug.remote_autostart=off" | sudo tee -a $(php -i | grep "Loaded Configuration File" | sed -e 's|.* => \(.*\)|\1|') > /dev/null
+        echo "xdebug.mode=coverage" | sudo tee -a $(php -i | grep "Loaded Configuration File" | sed -e 's|.* => \(.*\)|\1|') > /dev/null
+
     - name: Validate composer.json and composer.lock
       run: composer validate --strict
 
@@ -44,4 +52,4 @@ jobs:
       run: composer run phpstan
 
     - name: Run pest tests
-      run: composer run pest
+      run: composer run pest:coverage

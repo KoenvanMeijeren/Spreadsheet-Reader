@@ -1,0 +1,10 @@
+version: "3.9"
+
+services:
+  php:
+    container_name: "spreadsheet_reader_php"
+    image: wodby/php:8.3
+    environment:
+      PHP_FPM_CLEAR_ENV: "no"
+    volumes:
+      - ./:/var/www/html:cached
