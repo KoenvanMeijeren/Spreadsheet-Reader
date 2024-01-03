@@ -66,14 +66,10 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
       throw new FileNotReadableException($filepath);
     }
 
-    if (!class_exists('Spreadsheet_Excel_Reader')) {
-      throw new \RuntimeException('Spreadsheet_Excel_Reader class not available');
-    }
-
-    $this->inputFile = new \Spreadsheet_Excel_Reader($filepath, FALSE, 'UTF-8');
+    $this->inputFile = new SpreadsheetExcelReader($filepath, FALSE, 'UTF-8');
 
     if (function_exists('mb_convert_encoding')) {
-      $this->inputFile->setUTFEncoder('mb');
+      $this->inputFile->setUtfEncoder('mb');
     }
 
     if (empty($this->inputFile->sheets)) {

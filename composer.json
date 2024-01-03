@@ -20,12 +20,10 @@
 		"php": ">=8.3",
 		"ext-zip": "*",
 		"ext-xmlreader": "*",
-		"ext-simplexml": "*"
+		"ext-simplexml": "*",
+        "ext-iconv": "*"
     },
 	"autoload": {
-		"classmap": [
-			"./excel-reader/"
-		],
 		"psr-4": {
 			"KoenVanMeijeren\\SpreadsheetReader\\": "src"
 		}
