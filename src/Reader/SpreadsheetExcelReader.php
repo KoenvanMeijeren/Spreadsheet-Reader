@@ -90,7 +90,7 @@ function gm_get_date(int|float|NULL $ts = NULL): array {
 /**
  * Convert a 1900 based date offset into a Unix timestamp.
  */
-function v(string $data, int $pos): int {
+function v(string $data, int|float $pos): int {
   return ord($data[$pos]) | ord($data[$pos + 1]) << 8;
 }
 
@@ -394,7 +394,7 @@ final class SpreadsheetExcelReader {
   /**
    * ADDED by Matt Kruse for better formatting.
    */
-  private function formatValue(int|string|float $format, int $num, int|string|float $f): array {
+  private function formatValue(int|string|float $format, int|float $num, int|string|float $f): array {
     // 49==TEXT format
     // http://code.google.com/p/php-excel-reader/issues/detail?id=7
     if ((!$f && $format === "%s") || ($f === 49) || ($format === "GENERAL")) {
@@ -403,7 +403,7 @@ final class SpreadsheetExcelReader {
 
     // Custom pattern can be POSITIVE;NEGATIVE;ZERO
     // The "text" option as 4th parameter is not handled.
-    $parts = explode(";", $format);
+    $parts = explode(";", (string) $format);
     $pattern = $parts[0];
     // Negative pattern.
     if (count($parts) > 2 && $num === 0) {
@@ -412,7 +412,7 @@ final class SpreadsheetExcelReader {
     // Zero pattern.
     if (count($parts) > 1 && $num < 0) {
       $pattern = $parts[1];
-      $num = abs($num);
+      $num = (int) abs($num);
     }
 
     $color = "";
@@ -558,11 +558,13 @@ final class SpreadsheetExcelReader {
 
             $len = ($asciiEncoding) ? $numChars : $numChars * 2;
             if ($spos + $len < $limitpos) {
+              // @phpstan-ignore-next-line
               $retstr = substr($data, $spos, $len);
               $spos += $len;
             }
             else {
               // Found countinue.
+              // @phpstan-ignore-next-line
               $retstr = substr($data, $spos, $limitpos - $spos);
               $bytesRead = $limitpos - $spos;
               $charsLeft = $numChars - (($asciiEncoding) ? $bytesRead : ($bytesRead / 2));
@@ -580,15 +582,15 @@ final class SpreadsheetExcelReader {
                 $spos += 1;
                 if ($asciiEncoding && ($option === 0)) {
                   // min($charsLeft, $conlength);.
-                  $len = min($charsLeft, $limitpos - $spos);
-                  $retstr .= substr($data, $spos, $len);
+                  $len = (int) min($charsLeft, $limitpos - $spos);
+                  $retstr .= substr($data, (int) $spos, $len);
                   $charsLeft -= $len;
                   $asciiEncoding = TRUE;
                 }
                 elseif (!$asciiEncoding && ($option !== 0)) {
                   // min($charsLeft, $conlength);.
-                  $len = min($charsLeft * 2, $limitpos - $spos);
-                  $retstr .= substr($data, $spos, $len);
+                  $len = (int) min($charsLeft * 2, $limitpos - $spos);
+                  $retstr .= substr($data, (int) $spos, $len);
                   $charsLeft -= $len / 2;
                   $asciiEncoding = FALSE;
                 }
@@ -610,8 +612,8 @@ final class SpreadsheetExcelReader {
                   }
                   $retstr = $newstr;
                   // min($charsLeft, $conlength);.
-                  $len = min($charsLeft * 2, $limitpos - $spos);
-                  $retstr .= substr($data, $spos, $len);
+                  $len = (int) min($charsLeft * 2, $limitpos - $spos);
+                  $retstr .= substr($data, (int) $spos, $len);
                   $charsLeft -= $len / 2;
                   $asciiEncoding = FALSE;
                 }
@@ -748,6 +750,7 @@ final class SpreadsheetExcelReader {
                 $tmp = preg_replace("/\;.*/", "", $formatstr);
                 $tmp = preg_replace("/^\[[^\]]*\]/", "", $tmp);
                 // Found day and time format.
+                // @phpstan-ignore-next-line
                 if (preg_match("/[^hmsday\/\-:\s\\\,AMP]/i", $tmp) === 0) {
                   $isdate = TRUE;
                   $formatstr = $tmp;
@@ -935,7 +938,7 @@ final class SpreadsheetExcelReader {
           // It machine dependent.
           $tmp = unpack("ddouble", substr($data, $spos + 6, 8));
           if ($this->isDate($spos)) {
-            $numValue = $tmp['double'];
+            $numValue = $tmp['double'] ?? 0;
           }
           else {
             $numValue = $this->createNumber($spos);
@@ -974,7 +977,7 @@ final class SpreadsheetExcelReader {
             // _NUMBER record. It is machine dependent.
             $tmp = unpack("ddouble", substr($data, $spos + 6, 8));
             if ($this->isDate($spos)) {
-              $numValue = $tmp['double'];
+              $numValue = $tmp['double'] ?? 0;
             }
             else {
               $numValue = $this->createNumber($spos);
@@ -1137,7 +1140,7 @@ final class SpreadsheetExcelReader {
   /**
    * Get the details for a particular cell.
    */
-  private function getCellDetails(int $spos, int $numValue, int $column): array {
+  private function getCellDetails(int $spos, int|float $numValue, int $column): array {
     $xfindex = ord($this->data[$spos + 4]) | ord($this->data[$spos + 5]) << 8;
     $xfrecord = $this->xfRecords[$xfindex];
     $type = $xfrecord['type'];
@@ -1168,7 +1171,7 @@ final class SpreadsheetExcelReader {
       $totalseconds -= $secs;
       $hours = (int) floor($totalseconds / (60 * 60));
       $mins = (int) floor($totalseconds / 60) % 60;
-      $string = date($format, mktime($hours, $mins, $secs, $dateinfo["mon"], $dateinfo["mday"], $dateinfo["year"]));
+      $string = date($format, (int) mktime($hours, $mins, $secs, $dateinfo["mon"], $dateinfo["mday"], $dateinfo["year"]));
     }
     elseif ($type === 'number') {
       $rectype = 'number';
@@ -1239,7 +1242,7 @@ final class SpreadsheetExcelReader {
   /**
    * Get the value for a particular cell.
    */
-  private function getIEEE754(int $rknum): int { // phpcs:ignore
+  private function getIEEE754(int $rknum): int|float { // phpcs:ignore
     if (($rknum & 0x02) !== 0) {
       $value = $rknum >> 2;
     }
@@ -1272,10 +1275,12 @@ final class SpreadsheetExcelReader {
     $result = $string;
     if ($this->defaultEncoding) {
       switch ($this->encoderFunction) {
-        case 'iconv': $result = iconv('UTF-16LE', $this->defaultEncoding, $string);
+        case 'iconv':
+          $result = (string) iconv('UTF-16LE', $this->defaultEncoding, $string);
           break;
 
-        case 'mb_convert_encoding': $result = mb_convert_encoding($string, $this->defaultEncoding, 'UTF-16LE');
+        case 'mb_convert_encoding':
+          $result = (string) mb_convert_encoding($string, $this->defaultEncoding, 'UTF-16LE');
           break;
       }
     }
@@ -1285,7 +1290,7 @@ final class SpreadsheetExcelReader {
   /**
    * Convert a number into a column name.
    */
-  private function getInt4d(string $data, int $pos): int {
+  private function getInt4d(string $data, int|float $pos): int {
     $value = ord($data[$pos]) | (ord($data[$pos + 1]) << 8) | (ord($data[$pos + 2]) << 16) | (ord($data[$pos + 3]) << 24);
     if ($value >= 4294967294) {
       $value = -2;

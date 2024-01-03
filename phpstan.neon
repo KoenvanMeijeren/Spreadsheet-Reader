@@ -5,7 +5,7 @@ rules:
     - Spatie\Ray\PHPStan\RemainingRayCallRule
 
 parameters:
-  level: 6
+  level: 7
   featureToggles:
     notAnalysedTrait: false
     looseComparison: false

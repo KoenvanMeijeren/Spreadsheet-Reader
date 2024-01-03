@@ -2,6 +2,8 @@
 
 namespace KoenVanMeijeren\SpreadsheetReader\Reader;
 
+use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
+
 /**
  * Spreadsheet reader for ODS files.
  *
@@ -92,7 +94,12 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
     $zip->close();
 
     if ($this->contentPath && is_readable($this->contentPath)) {
-      $this->content = \XMLReader::open($this->contentPath);
+      $xml_reader = \XMLReader::open($this->contentPath);
+      if (!$xml_reader) {
+        throw new FileNotReadableException($this->contentPath);
+      }
+
+      $this->content = $xml_reader;
       $this->isValid = TRUE;
     }
   }
@@ -130,7 +137,7 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
 
     $sheetReader = \XMLReader::open($this->contentPath);
     if (!$sheetReader) {
-      return [];
+      throw new FileNotReadableException($this->contentPath);
     }
 
     while ($sheetReader->read()) {
@@ -172,7 +179,12 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
     // If the worksheet was already iterated, the XML file is reopened.
     // Otherwise, it should be at the beginning anyway.
     $this->content->close();
-    $this->content = \XMLReader::open($this->contentPath);
+    $sheetReader = \XMLReader::open($this->contentPath);
+    if (!$sheetReader) {
+      throw new FileNotReadableException($this->contentPath);
+    }
+
+    $this->content = $sheetReader;
     $this->isValid = TRUE;
 
     $this->isTableOpen = FALSE;
@@ -292,6 +304,7 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
    * {@inheritdoc}
    */
   public function count(): int {
+    // @phpstan-ignore-next-line
     return $this->currentRowIndex + 1;
   }
 

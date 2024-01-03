@@ -199,6 +199,7 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
    * {@inheritdoc}
    */
   public function count(): int {
+    // @phpstan-ignore-next-line
     return $this->hasError ? 0 : $this->rowCount;
   }
 

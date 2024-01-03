@@ -2,6 +2,8 @@
 
 namespace KoenVanMeijeren\SpreadsheetReader\Reader;
 
+use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
+
 /**
  * Spreadsheet reader for XLSX files.
  *
@@ -131,7 +133,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
 
     // Getting the general workbook information.
     if ($zip->locateName('xl/workbook.xml') !== FALSE) {
-      $this->workbookXML = new \SimpleXMLElement($zip->getFromName('xl/workbook.xml'));
+      $this->workbookXML = new \SimpleXMLElement((string) $zip->getFromName('xl/workbook.xml'));
     }
 
     // Extracting the XMLs from the XLSX zip file.
@@ -141,7 +143,12 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
       $this->tempFiles[] = $this->tempDir . 'xl' . DIRECTORY_SEPARATOR . 'sharedStrings.xml';
 
       if (is_readable($this->sharedStringsPath)) {
-        $this->sharedStrings = \XMLReader::open($this->sharedStringsPath);
+        $xml_reader = \XMLReader::open($this->sharedStringsPath);
+        if (!$xml_reader) {
+          throw new FileNotReadableException($this->sharedStringsPath);
+        }
+
+        $this->sharedStrings = $xml_reader;
         $this->prepareSharedStringCache();
       }
     }
@@ -286,7 +293,12 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
     if ($this->sharedStringIndex > $index) {
       $this->isSSOpen = FALSE;
       $this->sharedStrings->close();
-      $this->sharedStrings = \XMLReader::open($this->sharedStringsPath);
+      $xml_reader = \XMLReader::open($this->sharedStringsPath);
+      if (!$xml_reader) {
+        throw new FileNotReadableException($this->sharedStringsPath);
+      }
+
+      $this->sharedStrings = $xml_reader;
       $this->sharedStringIndex = 0;
       $this->lastSharedStringValue = NULL;
       $this->isSSForwarded = FALSE;
@@ -391,7 +403,12 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
       $this->worksheet->close();
     }
 
-    $this->worksheet = \XMLReader::open($this->worksheetPath);
+    $xml_reader = \XMLReader::open($this->worksheetPath);
+    if (!$xml_reader) {
+      throw new FileNotReadableException($this->worksheetPath);
+    }
+
+    $this->worksheet = $xml_reader;
 
     $this->isValid = TRUE;
     $this->isRowOpen = FALSE;
@@ -531,6 +548,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
    * {@inheritDoc}
    */
   public function count(): int {
+    // @phpstan-ignore-next-line
     return $this->currentRowIndex + 1;
   }
 

@@ -65,10 +65,16 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
     }
 
     $this->config = $config;
-    $this->handle = fopen($filepath, 'rb');
+
+    $handle = fopen($filepath, 'rb');
+    if (!$handle) {
+      throw new FileNotReadableException($filepath);
+    }
+
+    $this->handle = $handle;
 
     // Checking the file for byte-order mark to determine encoding.
-    $bom16 = bin2hex(fread($this->handle, 2));
+    $bom16 = bin2hex((string) fread($this->handle, 2));
     if ($bom16 === 'fffe') {
       $this->encoding = 'UTF-16LE';
       // $this -> Encoding = 'UTF-16';
@@ -82,7 +88,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
 
     if (!$this->bomLength) {
       fseek($this->handle, 0);
-      $bom32 = bin2hex(fread($this->handle, 4));
+      $bom32 = bin2hex((string) fread($this->handle, 4));
       if ($bom32 === '0000feff') {
         // $this -> Encoding = 'UTF-32BE';
         $this->encoding = 'UTF-32';
@@ -96,7 +102,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
     }
 
     fseek($this->handle, 0);
-    $bom8 = bin2hex(fread($this->handle, 3));
+    $bom8 = bin2hex((string) fread($this->handle, 3));
     if ($bom8 === 'efbbbf') {
       $this->encoding = 'UTF-8';
       $this->bomLength = 3;
@@ -107,7 +113,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
       fseek($this->handle, $this->bomLength);
     }
 
-    $is_empty = feof($this->handle) && (trim(fread($this->handle, 1)) === '');
+    $is_empty = feof($this->handle) && (trim((string) fread($this->handle, 1)) === '');
     if ($is_empty) {
       throw new FileEmptyException($filepath);
     }
@@ -122,11 +128,11 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
       // Reading the first row and checking if a specific separator character
       // has more columns than others (it means that most likely that is the
       // delimiter).
-      $semicolonCount = count(fgetcsv($this->handle, NULL, $semicolon));
+      $semicolonCount = count((array) fgetcsv($this->handle, NULL, $semicolon));
       fseek($this->handle, $this->bomLength);
-      $tabCount = count(fgetcsv($this->handle, NULL, $tab));
+      $tabCount = count((array) fgetcsv($this->handle, NULL, $tab));
       fseek($this->handle, $this->bomLength);
-      $commaCount = count(fgetcsv($this->handle, NULL, $comma));
+      $commaCount = count((array) fgetcsv($this->handle, NULL, $comma));
       fseek($this->handle, $this->bomLength);
 
       $delimiter = $semicolon;
@@ -184,17 +190,17 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
     if ($this->encoding === 'UTF-16LE' || $this->encoding === 'UTF-16BE') {
       while (!feof($this->handle)) {
         // While bytes are insignificant whitespace, do nothing.
-        $character = ord(fgetc($this->handle));
+        $character = ord((string) fgetc($this->handle));
         if ($character === 10 || $character === 13) {
           continue;
         }
 
         // If significant bytes are found, go back to the last place before it.
         if ($this->encoding === 'UTF-16LE') {
-          fseek($this->handle, (ftell($this->handle) - 1));
+          fseek($this->handle, ((int) ftell($this->handle)) - 1);
         }
         else {
-          fseek($this->handle, (ftell($this->handle) - 2));
+          fseek($this->handle, ((int) ftell($this->handle)) - 2);
         }
 
         break;
@@ -209,7 +215,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
     if ($this->currentRow && $this->encoding !== 'ASCII' && $this->encoding !== 'UTF-8') {
       foreach ($this->currentRow as $key => $value) {
         $this->currentRow[$key] = trim(trim(
-          mb_convert_encoding($value, 'UTF-8', $this->encoding),
+          mb_convert_encoding((string) $value, 'UTF-8', $this->encoding),
           $this->config->enclosure
         ));
       }
@@ -234,6 +240,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
    * {@inheritDoc}
    */
   public function count(): int {
+    // @phpstan-ignore-next-line
     return ($this->currentRowIndex + 1);
   }
 
