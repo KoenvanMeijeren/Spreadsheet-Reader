@@ -404,14 +404,14 @@ final class SpreadsheetExcelReader {
     // Custom pattern can be POSITIVE;NEGATIVE;ZERO
     // The "text" option as 4th parameter is not handled.
     $parts = explode(";", (string) $format);
-    $pattern = $parts[0];
+    $pattern = $parts[0] ?? '';
     // Negative pattern.
     if (count($parts) > 2 && $num === 0) {
-      $pattern = $parts[2];
+      $pattern = $parts[2] ?? '';
     }
     // Zero pattern.
     if (count($parts) > 1 && $num < 0) {
-      $pattern = $parts[1];
+      $pattern = $parts[1] ?? '';
       $num = (int) abs($num);
     }
 
@@ -420,31 +420,31 @@ final class SpreadsheetExcelReader {
     $color_regex = "/^\[(BLACK|BLUE|CYAN|GREEN|MAGENTA|RED|WHITE|YELLOW)\]/i";
     if (preg_match($color_regex, $pattern, $matches)) {
       $color = strtolower($matches[1]);
-      $pattern = preg_replace($color_regex, "", $pattern);
+      $pattern = (string) preg_replace($color_regex, "", $pattern);
     }
 
     // In Excel formats, "_" is used to add spacing, which we can't do in HTML.
-    $pattern = preg_replace("/_./", "", $pattern);
+    $pattern = (string) preg_replace("/_./", "", $pattern);
 
     // Some non-number characters are escaped with \, which we don't need.
-    $pattern = preg_replace("/\\\/", "", $pattern);
+    $pattern = (string) preg_replace("/\\\/", "", $pattern);
 
     // Some non-number strings are quoted, so we'll get rid of the quotes.
-    $pattern = preg_replace("/\"/", "", $pattern);
+    $pattern = (string) preg_replace("/\"/", "", $pattern);
 
     // TEMPORARY - Convert # to 0.
-    $pattern = preg_replace("/\#/", "0", $pattern);
+    $pattern = (string) preg_replace("/\#/", "0", $pattern);
 
     // Find out if we need comma formatting.
-    $has_commas = preg_match("/,/", $pattern);
+    $has_commas = str_contains($pattern, ",");
     if ($has_commas) {
-      $pattern = preg_replace("/,/", "", $pattern);
+      $pattern = (string) preg_replace("/,/", "", $pattern);
     }
 
     // Handle Percentages.
     if (preg_match("/\d(\%)([^\%]|$)/", $pattern, $matches)) {
       $num *= 100;
-      $pattern = preg_replace("/(\d)(\%)([^\%]|$)/", "$1%$3", $pattern);
+      $pattern = (string) preg_replace("/(\d)(\%)([^\%]|$)/", "$1%$3", $pattern);
     }
 
     // Handle the number itself.
@@ -458,7 +458,7 @@ final class SpreadsheetExcelReader {
         $sprintf_pattern = "%1." . strlen($right) . "f";
         $formatted = sprintf($sprintf_pattern, $num);
       }
-      $pattern = preg_replace($number_regex, $formatted, $pattern);
+      $pattern = (string) preg_replace($number_regex, $formatted, $pattern);
     }
 
     return [
@@ -754,22 +754,28 @@ final class SpreadsheetExcelReader {
                 if (preg_match("/[^hmsday\/\-:\s\\\,AMP]/i", $tmp) === 0) {
                   $isdate = TRUE;
                   $formatstr = $tmp;
+                  // @phpstan-ignore-next-line
                   $formatstr = str_replace(['AM/PM', 'mmmm', 'mmm'], ['a', 'F', 'M'], $formatstr);
                   // m/mm are used for both minutes and months - oh SNAP!
                   // This mess tries to fix for that.
                   // 'm' === minutes only if following h/hh or preceding s/ss.
                   $formatstr = preg_replace("/(h:?)mm?/", "$1i", $formatstr);
+                  // @phpstan-ignore-next-line
                   $formatstr = preg_replace("/mm?(:?s)/", "i$1", $formatstr);
                   // A single 'm' = n in PHP.
+                  // @phpstan-ignore-next-line
                   $formatstr = preg_replace("/(^|[^m])m([^m]|$)/", '$1n$2', $formatstr);
+                  // @phpstan-ignore-next-line
                   $formatstr = preg_replace("/(^|[^m])m([^m]|$)/", '$1n$2', $formatstr);
                   // Else it's months.
+                  // @phpstan-ignore-next-line
                   $formatstr = str_replace('mm', 'm', $formatstr);
                   // Convert single 'd' to 'j'.
                   $formatstr = preg_replace("/(^|[^d])d([^d]|$)/", '$1j$2', $formatstr);
                   $formatstr = str_replace(
                     ['dddd', 'ddd', 'dd', 'yyyy', 'yy', 'hh', 'h'],
                     ['l', 'D', 'd', 'Y', 'y', 'H', 'g'],
+                    // @phpstan-ignore-next-line
                     $formatstr
                   );
                   $formatstr = preg_replace("/ss?/", 's', $formatstr);

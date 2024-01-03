@@ -154,7 +154,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
   /**
    * {@inheritDoc}
    */
-  public function changeSheet(int $index): bool {
+  public function changeSheet(int $index): void {
     throw new ChangeSheetIsNotSupportedException(SpreadsheetReaderFileType::CSV->value);
   }
 

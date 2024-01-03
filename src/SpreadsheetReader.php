@@ -53,7 +53,7 @@ final class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInt
       SpreadsheetReaderFileType::XLS => new SpreadsheetReaderXLS($filepath),
       SpreadsheetReaderFileType::ODS => new SpreadsheetReaderODS($filepath),
       SpreadsheetReaderFileType::CSV => new SpreadsheetReaderCSV($filepath, new SpreadsheetReaderCSVConfig()),
-      default => throw new FileTypeUnsupportedException($mimeType),
+      default => throw new FileTypeUnsupportedException($mimeType ?? $filepath),
     };
   }
 
@@ -156,8 +156,8 @@ final class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInt
   /**
    * {@inheritDoc}
    */
-  public function changeSheet(int $index): bool {
-    return $this->reader->changeSheet($index);
+  public function changeSheet(int $index): void {
+    $this->reader->changeSheet($index);
   }
 
   /**

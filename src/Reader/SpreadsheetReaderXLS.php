@@ -14,7 +14,7 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
   /**
    * File handle.
    */
-  private mixed $inputFile;
+  private SpreadsheetExcelReader $reader;
 
   /**
    * Current row index.
@@ -66,13 +66,10 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
       throw new FileNotReadableException($filepath);
     }
 
-    $this->inputFile = new SpreadsheetExcelReader($filepath, FALSE, 'UTF-8');
+    $this->reader = new SpreadsheetExcelReader($filepath, FALSE, 'UTF-8');
+    $this->reader->setUtfEncoder('mb');
 
-    if (function_exists('mb_convert_encoding')) {
-      $this->inputFile->setUtfEncoder('mb');
-    }
-
-    if (empty($this->inputFile->sheets)) {
+    if (empty($this->reader->sheets)) {
       $this->hasError = TRUE;
       return;
     }
@@ -84,7 +81,7 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
    * Destructs the object.
    */
   public function __destruct() {
-    unset($this->inputFile);
+    unset($this->reader);
   }
 
   /**
@@ -93,10 +90,10 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
   public function sheets(): array {
     if ($this->sheets === []) {
       $this->sheets = [];
-      $this->sheetIndexes = array_keys($this->inputFile->sheets);
+      $this->sheetIndexes = array_keys($this->reader->sheets);
 
       foreach ($this->sheetIndexes as $sheetIndex) {
-        $this->sheets[] = $this->inputFile->boundSheets[$sheetIndex]['name'];
+        $this->sheets[] = $this->reader->boundSheets[$sheetIndex]['name'];
       }
     }
 
@@ -106,29 +103,28 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
   /**
    * {@inheritdoc}
    */
-  public function changeSheet(int $index): bool {
-    $sheets = $this->sheets(); // phpcs:ignore
-
-    if (isset($this->sheets[$index])) {
-      $this->rewind();
-      $this->currentSheet = $this->sheetIndexes[$index];
-
-      $columnCount = $this->inputFile->sheets[$this->currentSheet]['numCols'];
-      $this->rowCount = $this->inputFile->sheets[$this->currentSheet]['numRows'];
-
-      // For the case when the reader doesn't have the row count set correctly.
-      if (!$this->rowCount && count($this->inputFile->sheets[$this->currentSheet]['cells'])) {
-        end($this->inputFile->sheets[$this->currentSheet]['cells']);
-        $this->rowCount = (int) key($this->inputFile->sheets[$this->currentSheet]['cells']);
-      }
-
-      $this->emptyRow = [];
-      if ($columnCount) {
-        $this->emptyRow = array_fill(1, $columnCount, '');
-      }
+  public function changeSheet(int $index): void {
+    $sheets = $this->sheets();
+    if (!isset($sheets[$index])) {
+      throw new \OutOfBoundsException("SpreadsheetError: Position {$index} not found!");
     }
 
-    return FALSE;
+    $this->rewind();
+    $this->currentSheet = $this->sheetIndexes[$index];
+
+    $columnCount = $this->reader->sheets[$this->currentSheet]['numCols'];
+    $this->rowCount = $this->reader->sheets[$this->currentSheet]['numRows'];
+
+    // For the case when the reader doesn't have the row count set correctly.
+    if (!$this->rowCount && count($this->reader->sheets[$this->currentSheet]['cells'])) {
+      end($this->reader->sheets[$this->currentSheet]['cells']);
+      $this->rowCount = (int) key($this->reader->sheets[$this->currentSheet]['cells']);
+    }
+
+    $this->emptyRow = [];
+    if ($columnCount) {
+      $this->emptyRow = array_fill(1, $columnCount, '');
+    }
   }
 
   /**
@@ -161,8 +157,8 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
       return;
     }
 
-    if (isset($this->inputFile->sheets[$this->currentSheet]['cells'][$this->index])) {
-      $this->currentRow = $this->inputFile->sheets[$this->currentSheet]['cells'][$this->index];
+    if (isset($this->reader->sheets[$this->currentSheet]['cells'][$this->index])) {
+      $this->currentRow = $this->reader->sheets[$this->currentSheet]['cells'][$this->index];
       if (!$this->currentRow) {
         return;
       }
