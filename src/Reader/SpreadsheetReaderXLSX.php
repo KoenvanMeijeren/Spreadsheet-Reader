@@ -141,8 +141,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
       $this->tempFiles[] = $this->tempDir . 'xl' . DIRECTORY_SEPARATOR . 'sharedStrings.xml';
 
       if (is_readable($this->sharedStringsPath)) {
-        $this->sharedStrings = new \XMLReader();
-        $this->sharedStrings->open($this->sharedStringsPath);
+        $this->sharedStrings = \XMLReader::open($this->sharedStringsPath);
         $this->prepareSharedStringCache();
       }
     }
@@ -240,8 +239,8 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
    */
   private function prepareSharedStringCache(): void {
     while ($this->sharedStrings->read()) {
-      if ($this->sharedStrings->name == 'sst') {
-        $this->sharedStringCount = $this->sharedStrings->getAttribute('uniqueCount');
+      if ($this->sharedStrings->name === 'sst') {
+        $this->sharedStringCount = (int) $this->sharedStrings->getAttribute('uniqueCount');
         break;
       }
     }
@@ -255,7 +254,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
     while ($this->sharedStrings->read()) {
       switch ($this->sharedStrings->name) {
         case 'si':
-          if ($this->sharedStrings->nodeType == \XMLReader::END_ELEMENT) {
+          if ($this->sharedStrings->nodeType === \XMLReader::END_ELEMENT) {
             $this->sharedStringCache[$cacheIndex] = $cacheValue;
             $cacheIndex++;
             $cacheValue = '';
@@ -263,7 +262,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
           break;
 
         case 't':
-          if ($this->sharedStrings->nodeType == \XMLReader::END_ELEMENT) {
+          if ($this->sharedStrings->nodeType === \XMLReader::END_ELEMENT) {
             continue 2;
           }
 
@@ -287,16 +286,16 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
     if ($this->sharedStringIndex > $index) {
       $this->isSSOpen = FALSE;
       $this->sharedStrings->close();
-      $this->sharedStrings->open($this->sharedStringsPath);
+      $this->sharedStrings = \XMLReader::open($this->sharedStringsPath);
       $this->sharedStringIndex = 0;
       $this->lastSharedStringValue = NULL;
       $this->isSSForwarded = FALSE;
     }
 
     // Finding the unique string count (if not already read)
-    if ($this->sharedStringIndex == 0 && !$this->sharedStringCount) {
+    if ($this->sharedStringIndex === 0 && !$this->sharedStringCount) {
       while ($this->sharedStrings->read()) {
-        if ($this->sharedStrings->name == 'sst') {
+        if ($this->sharedStrings->name === 'sst') {
           $this->sharedStringCount = $this->sharedStrings->getAttribute('uniqueCount');
           break;
         }
@@ -310,7 +309,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
 
     // If an index with the same value as the last already fetched is requested
     // (any further traversing the tree would get us further away from the node)
-    if (($index == $this->sharedStringIndex) && ($this->lastSharedStringValue !== NULL)) {
+    if (($index === $this->sharedStringIndex) && ($this->lastSharedStringValue !== NULL)) {
       return $this->lastSharedStringValue;
     }
 
@@ -328,8 +327,8 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
         }
       }
 
-      if ($this->sharedStrings->name == 'si') {
-        if ($this->sharedStrings->nodeType == \XMLReader::END_ELEMENT) {
+      if ($this->sharedStrings->name === 'si') {
+        if ($this->sharedStrings->nodeType === \XMLReader::END_ELEMENT) {
           $this->isSSOpen = FALSE;
           $this->sharedStringIndex++;
         }
@@ -352,11 +351,11 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
     $value = '';
 
     // Extract the value from the shared string.
-    if ($this->isSSOpen && ($this->sharedStringIndex == $index)) {
+    if ($this->isSSOpen && ($this->sharedStringIndex === $index)) {
       while ($this->sharedStrings->read()) {
         switch ($this->sharedStrings->name) {
           case 't':
-            if ($this->sharedStrings->nodeType == \XMLReader::END_ELEMENT) {
+            if ($this->sharedStrings->nodeType === \XMLReader::END_ELEMENT) {
               continue 2;
             }
 
@@ -364,7 +363,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
             break;
 
           case 'si':
-            if ($this->sharedStrings->nodeType == \XMLReader::END_ELEMENT) {
+            if ($this->sharedStrings->nodeType === \XMLReader::END_ELEMENT) {
               $this->isSSOpen = FALSE;
               $this->isSSForwarded = TRUE;
               break 2;
@@ -391,11 +390,8 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
     if ($this->worksheet instanceof \XMLReader) {
       $this->worksheet->close();
     }
-    else {
-      $this->worksheet = new \XMLReader();
-    }
 
-    $this->worksheet->open($this->worksheetPath);
+    $this->worksheet = \XMLReader::open($this->worksheetPath);
 
     $this->isValid = TRUE;
     $this->isRowOpen = FALSE;
@@ -425,16 +421,14 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
 
     if (!$this->isRowOpen) {
       while ($this->isValid = $this->worksheet->read()) {
-        if ($this->worksheet->name == 'row') {
+        if ($this->worksheet->name === 'row') {
           // Getting the row-spanning area (stored as e.g., 1:12)
           // so that the last cells will be present, even if empty.
           $rowSpans = $this->worksheet->getAttribute('spans');
+          $currentRowColumnCount = 0;
           if ($rowSpans) {
             $rowSpans = explode(':', $rowSpans);
             $currentRowColumnCount = $rowSpans[1];
-          }
-          else {
-            $currentRowColumnCount = 0;
           }
 
           if ($currentRowColumnCount > 0) {
@@ -459,7 +453,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
         switch ($this->worksheet->name) {
           // Row end found.
           case 'row':
-            if ($this->worksheet->nodeType == \XMLReader::END_ELEMENT) {
+            if ($this->worksheet->nodeType === \XMLReader::END_ELEMENT) {
               $this->isRowOpen = FALSE;
               break 2;
             }
@@ -468,7 +462,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
           // Cell.
           case 'c':
             // If it is a closing tag, skip it.
-            if ($this->worksheet->nodeType == \XMLReader::END_ELEMENT) {
+            if ($this->worksheet->nodeType === \XMLReader::END_ELEMENT) {
               continue 2;
             }
 
@@ -477,7 +471,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
             $letter = preg_replace('{[^[:alpha:]]}S', '', $index);
             $index = self::indexFromColumnLetter($letter);
 
-            $cellHasSharedString = $this->worksheet->getAttribute('t') == self::CELL_TYPE_SHARED_STR;
+            $cellHasSharedString = $this->worksheet->getAttribute('t') === self::CELL_TYPE_SHARED_STR;
 
             $value = $this->worksheet->readString();
 
@@ -495,7 +489,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
 
           // Cell value.
           case 'v':
-            if ($this->worksheet->nodeType == \XMLReader::END_ELEMENT) {
+            if ($this->worksheet->nodeType === \XMLReader::END_ELEMENT) {
               continue 2;
             }
 
@@ -513,7 +507,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
       // Adding empty cells, if necessary,
       // Only empty cells between and on the left side are added.
       if (($maxIndex + 1) > $cellCount) {
-        $this->currentRow = ($this->currentRow + array_fill(0, ($maxIndex + 1), ''));
+        $this->currentRow += array_fill(0, ($maxIndex + 1), '');
         ksort($this->currentRow);
       }
     }
@@ -538,7 +532,6 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
    */
   public function count(): int {
     return $this->currentRowIndex + 1;
-
   }
 
   /**
@@ -550,7 +543,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
    * @return int
    *   Numeric index (0-based) or boolean false if it cannot be calculated.
    */
-  public static function indexFromColumnLetter(string $letter): int {
+  private static function indexFromColumnLetter(string $letter): int {
     $letter = strtoupper($letter);
 
     $result = 0;
