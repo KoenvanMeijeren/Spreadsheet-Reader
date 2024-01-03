@@ -4,6 +4,7 @@
  * @file
  */
 
+use KoenVanMeijeren\SpreadsheetReader\Exceptions\ChangeSheetIsNotSupportedException;
 use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileEmptyException;
 use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
 use KoenVanMeijeren\SpreadsheetReader\Reader\SpreadsheetReaderInterface;
@@ -28,7 +29,6 @@ it('can open a CSV file', function () {
 
   // Assert.
   $this->assertCount(1, $reader->sheets());
-  $this->assertTrue($reader->changeSheet(0));
   $this->assertSame(1, $reader->count());
   $this->assertSame(0, $reader->key());
   $this->assertSame($expectedHeaderRow, $reader->current());
@@ -64,7 +64,6 @@ it('can open a CSV file with only a header', function () {
 
   // Assert.
   $this->assertCount(1, $reader->sheets());
-  $this->assertTrue($reader->changeSheet(0));
   $this->assertSame(1, $reader->count());
   $this->assertSame(0, $reader->key());
   $this->assertSame($expectedHeaderRow, $reader->current());
@@ -100,7 +99,6 @@ it('can traverse through the CSV file', function () {
 
   // Assert.
   $this->assertCount(1, $reader->sheets());
-  $this->assertTrue($reader->changeSheet(0));
   $this->assertSame(1, $reader->count());
   $this->assertSame(0, $reader->key());
   $this->assertSame($expectedHeaderRow, $reader->current());
@@ -138,7 +136,6 @@ it('can rewind the reader', function () {
 
   // Assert.
   $this->assertCount(1, $reader->sheets());
-  $this->assertTrue($reader->changeSheet(0));
   $this->assertSame(1, $reader->count());
   $this->assertSame(0, $reader->key());
   $this->assertSame($expectedHeaderRow, $reader->current());
@@ -247,4 +244,30 @@ it('runs with good performance and the memory does not peek', function () {
   $memory_used = $memory_end - $memory_start;
 
   $this->assertTrue(in_range($memory_used, 0.0, 0.2), "Memory used: {$memory_used}");
+});
+
+it('can return the sheets', function () {
+  // Arrange.
+  $filepath = get_mock_data_filepath('file_example_CSV_5000.csv');
+  $expectedSheets = [
+    'file_example_CSV_5000.csv',
+  ];
+
+  // Act.
+  $reader = new SpreadsheetReader($filepath);
+
+  // Assert.
+  $this->assertSame($expectedSheets, $reader->sheets());
+});
+
+it('throws an exception when trying to change the sheet', function () {
+  // Arrange.
+  $filepath = get_mock_data_filepath('file_example_CSV_5000.csv');
+
+  // Act & assert.
+  $this->expectException(ChangeSheetIsNotSupportedException::class);
+  $this->expectExceptionMessage('Change sheet is not supported for this file type (CSV)');
+
+  $reader = new SpreadsheetReader($filepath);
+  $reader->changeSheet(1);
 });

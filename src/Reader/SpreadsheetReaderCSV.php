@@ -3,6 +3,8 @@
 namespace KoenVanMeijeren\SpreadsheetReader\Reader;
 
 use KoenVanMeijeren\SpreadsheetReader\Config\SpreadsheetReaderCSVConfig;
+use KoenVanMeijeren\SpreadsheetReader\Config\SpreadsheetReaderFileType;
+use KoenVanMeijeren\SpreadsheetReader\Exceptions\ChangeSheetIsNotSupportedException;
 use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileEmptyException;
 use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
 
@@ -147,12 +149,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
    * {@inheritDoc}
    */
   public function changeSheet(int $index): bool {
-    if ($index === 0) {
-      $this->rewind();
-      return TRUE;
-    }
-
-    return FALSE;
+    throw new ChangeSheetIsNotSupportedException(SpreadsheetReaderFileType::CSV->value);
   }
 
   /**
