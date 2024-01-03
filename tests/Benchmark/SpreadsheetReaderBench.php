@@ -27,7 +27,8 @@ final class SpreadsheetReaderBench {
   public function benchConsume(array $params): void {
     $reader = new SpreadsheetReader($params['path']);
     while ($reader->valid()) {
-      $reader->next();;
+      $reader->next();
+
       $reader->current();
     }
   }
