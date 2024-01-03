@@ -132,4 +132,9 @@
   <rule ref="DrupalPractice.Constants.GlobalConstant.GlobalConstant">
     <severity>0</severity>
   </rule>
+
+  <!-- Disable line ending errors on Windows -->
+  <rule ref="Generic.Files.LineEndings.InvalidEOLChar">
+    <severity>0</severity>
+  </rule>
 </ruleset>
