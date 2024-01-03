@@ -124,18 +124,23 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
    * {@inheritdoc}
    */
   public function sheets(): array {
-    if ($this->sheets === [] && $this->isValid) {
-      $sheetReader = \XMLReader::open($this->contentPath);
-
-      while ($sheetReader->read()) {
-        if ($sheetReader->name === 'table:table') {
-          $this->sheets[] = $sheetReader->getAttribute('table:name');
-          $sheetReader->next();
-        }
-      }
-
-      $sheetReader->close();
+    if ($this->sheets !== [] || !$this->isValid) {
+      return $this->sheets;
     }
+
+    $sheetReader = \XMLReader::open($this->contentPath);
+    if (!$sheetReader) {
+      return [];
+    }
+
+    while ($sheetReader->read()) {
+      if ($sheetReader->name === 'table:table') {
+        $this->sheets[] = $sheetReader->getAttribute('table:name');
+        $sheetReader->next();
+      }
+    }
+
+    $sheetReader->close();
 
     return $this->sheets;
   }

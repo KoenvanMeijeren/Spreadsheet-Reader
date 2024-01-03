@@ -59,7 +59,7 @@ class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInterface
    * Destructor, destroys all that remains (closes and deletes temp files).
    */
   public function __destruct() {
-    unset($this->reader, $this->fileType);
+    unset($this->reader);
   }
 
   /**

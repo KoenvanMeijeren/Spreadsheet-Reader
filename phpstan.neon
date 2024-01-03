@@ -5,13 +5,13 @@ rules:
     - Spatie\Ray\PHPStan\RemainingRayCallRule
 
 parameters:
-  level: 1
+  level: 2
   featureToggles:
     notAnalysedTrait: false
     looseComparison: false
     disableCheckMissingIterableValueType: false
     varTagType: false
-  checkDynamicProperties: false
+  checkDynamicProperties: true
   checkMissingIterableValueType: false
   checkGenericClassInNonGenericObjectType: false
   checkTooWideReturnTypesInProtectedAndPublicMethods: false
@@ -75,4 +75,5 @@ parameters:
   customRulesetUsed: true
   reportUnmatchedIgnoredErrors: true
   ignoreErrors:
+    - '#Access to an undefined property XMLReader#'
     - '#Construct empty\(\) is not allowed. Use more strict comparison.#'
