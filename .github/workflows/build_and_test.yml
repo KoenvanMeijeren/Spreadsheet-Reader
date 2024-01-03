@@ -40,5 +40,8 @@ jobs:
     - name: Run php code sniffer
       run: composer run phpcs
 
+    - name: Run php static analysis
+      run: composer run phpstan
+
     - name: Run pest tests
       run: composer run pest
