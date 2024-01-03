@@ -80,8 +80,7 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
     $zip->close();
 
     if ($this->contentPath && is_readable($this->contentPath)) {
-      $this->content = new \XMLReader();
-      $this->content->open($this->contentPath);
+      $this->content = \XMLReader::open($this->contentPath);
       $this->isValid = TRUE;
     }
   }
@@ -106,11 +105,10 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
    */
   public function sheets(): array {
     if ($this->sheets === [] && $this->isValid) {
-      $sheetReader = new \XMLReader();
-      $sheetReader->open($this->contentPath);
+      $sheetReader = \XMLReader::open($this->contentPath);
 
       while ($sheetReader->read()) {
-        if ($sheetReader->name == 'table:table') {
+        if ($sheetReader->name === 'table:table') {
           $this->sheets[] = $sheetReader->getAttribute('table:name');
           $sheetReader->next();
         }
@@ -141,19 +139,21 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
    * {@inheritdoc}
    */
   public function rewind(): void {
-    if ($this->currentRowIndex > 0) {
-      // If the worksheet was already iterated, the XML file is reopened.
-      // Otherwise, it should be at the beginning anyway.
-      $this->content->close();
-      $this->content->open($this->contentPath);
-      $this->isValid = TRUE;
-
-      $this->isTableOpen = FALSE;
-      $this->isRowOpen = FALSE;
-
-      $this->currentRow = NULL;
+    if ($this->currentRowIndex < 1) {
+      $this->currentRowIndex = 0;
+      return;
     }
 
+    // If the worksheet was already iterated, the XML file is reopened.
+    // Otherwise, it should be at the beginning anyway.
+    $this->content->close();
+    $this->content = \XMLReader::open($this->contentPath);
+    $this->isValid = TRUE;
+
+    $this->isTableOpen = FALSE;
+    $this->isRowOpen = FALSE;
+
+    $this->currentRow = NULL;
     $this->currentRowIndex = 0;
   }
 
@@ -185,8 +185,8 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
           $shouldSkipRead = FALSE;
         }
 
-        if ($this->content->name == 'table:table' && $this->content->nodeType != \XMLReader::END_ELEMENT) {
-          if ($tableCounter == $this->currentSheet) {
+        if ($this->content->name === 'table:table' && $this->content->nodeType !== \XMLReader::END_ELEMENT) {
+          if ($tableCounter === $this->currentSheet) {
             $this->isTableOpen = TRUE;
             break;
           }
@@ -208,7 +208,7 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
             break 2;
 
           case 'table:table-row':
-            if ($this->content->nodeType != \XMLReader::END_ELEMENT) {
+            if ($this->content->nodeType !== \XMLReader::END_ELEMENT) {
               $this->isRowOpen = TRUE;
               break 2;
             }
@@ -223,25 +223,12 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
       while ($this->isValid = $this->content->read()) {
         switch ($this->content->name) {
           case 'table:table-cell':
-            if ($this->content->nodeType == \XMLReader::END_ELEMENT || $this->content->isEmptyElement) {
-              if ($this->content->nodeType == \XMLReader::END_ELEMENT) {
-                $cellValue = $lastCellContent; // phpcs:ignore
-              }
-              elseif ($this->content->isEmptyElement) {
+            if ($this->content->nodeType === \XMLReader::END_ELEMENT || $this->content->isEmptyElement) {
+              if ($this->content->isEmptyElement) {
                 $lastCellContent = '';
-                $cellValue = $lastCellContent; // phpcs:ignore
               }
 
               $this->currentRow[] = $lastCellContent;
-
-              if ($this->content->getAttribute('table:number-columns-repeated') !== NULL) {
-                $repeatedColumnCount = $this->content->getAttribute('table:number-columns-repeated');
-                // Checking if larger than one because the value is already
-                // added to the row once before.
-                if ($repeatedColumnCount > 1) {
-                  $this->currentRow = array_pad($this->currentRow, (count($this->currentRow) + $repeatedColumnCount - 1), $lastCellContent);
-                }
-              }
             }
             else {
               $lastCellContent = '';
@@ -249,7 +236,7 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
             break;
 
           case 'text:p':
-            if ($this->content->nodeType != \XMLReader::END_ELEMENT) {
+            if ($this->content->nodeType !== \XMLReader::END_ELEMENT) {
               $lastCellContent = $this->content->readString();
             }
             break;
@@ -280,7 +267,7 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
    * {@inheritdoc}
    */
   public function count(): int {
-    return ($this->currentRowIndex + 1);
+    return $this->currentRowIndex + 1;
   }
 
 }
