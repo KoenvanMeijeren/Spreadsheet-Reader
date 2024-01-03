@@ -67,12 +67,35 @@ parameters:
         -
           type: Expr_ShellExec
           functions: null
+  ergebnis:
+  		declareStrictTypes:
+  			enabled: false
+  		noExtends:
+  			enabled: false
+  		noSwitch:
+  			enabled: false
+  		noNullableReturnTypeDeclaration:
+  			enabled: false
+  		noParameterWithNullableTypeDeclaration:
+  			enabled: false
+  		noParameterWithNullDefaultValue:
+  			enabled: false
+  		noIsset:
+  			enabled: false
+  		noConstructorParameterWithDefaultValue:
+  			enabled: false
   paths:
     - src/
+    - tests/
   parallel:
     processTimeout: 300.0
   customRulesetUsed: true
   reportUnmatchedIgnoredErrors: true
   ignoreErrors:
     - '#Access to an undefined property XMLReader#'
+    - '#Call to an undefined method Mockery#'
+    - '#Mockery\\LegacyMockInterface given.#'
     - '#Construct empty\(\) is not allowed. Use more strict comparison.#'
+    -
+    			message: '#Undefined variable: \$this#'
+    			path: tests/*
