@@ -2,6 +2,8 @@
 
 namespace KoenVanMeijeren\SpreadsheetReader\Reader;
 
+define('IDENTIFIER_OLE', pack("CCCCCCCC", 0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1));
+
 /**
  * Provides the OLERead class for reading OLE structured files.
  */
@@ -103,17 +105,17 @@ final class OLERead {
       $bbdBlocks = (BIG_BLOCK_SIZE - BIG_BLOCK_DEPOT_BLOCKS_POS) / 4;
     }
 
-    for ($i = 0; $i < $bbdBlocks; $i++) {
-      $bigBlockDepotBlocks[$i] = get_int4d($this->data, $pos);
+    for ($index = 0; $index < $bbdBlocks; $index++) {
+      $bigBlockDepotBlocks[$index] = get_int4d($this->data, $pos);
       $pos += 4;
     }
 
-    for ($j = 0; $j < $this->numExtensionBlocks; $j++) {
+    for ($numExtensionBlockIndex = 0; $numExtensionBlockIndex < $this->numExtensionBlocks; $numExtensionBlockIndex++) {
       $pos = ($this->extensionBlock + 1) * BIG_BLOCK_SIZE;
       $blocksToRead = min($this->numBigBlockDepotBlocks - $bbdBlocks, BIG_BLOCK_SIZE / 4 - 1);
 
-      for ($i = $bbdBlocks; $i < $bbdBlocks + $blocksToRead; $i++) {
-        $bigBlockDepotBlocks[$i] = get_int4d($this->data, $pos);
+      for ($bbdBlocksIndex = $bbdBlocks; $bbdBlocksIndex < $bbdBlocks + $blocksToRead; $bbdBlocksIndex++) {
+        $bigBlockDepotBlocks[$bbdBlocksIndex] = get_int4d($this->data, $pos);
         $pos += 4;
       }
 
@@ -127,10 +129,10 @@ final class OLERead {
     $index = 0;
     $this->bigBlockChain = [];
 
-    for ($i = 0; $i < $this->numBigBlockDepotBlocks; $i++) {
-      $pos = ($bigBlockDepotBlocks[$i] + 1) * BIG_BLOCK_SIZE;
+    for ($numBigBlockDepotBlocksIndex = 0; $numBigBlockDepotBlocksIndex < $this->numBigBlockDepotBlocks; $numBigBlockDepotBlocksIndex++) {
+      $pos = ($bigBlockDepotBlocks[$numBigBlockDepotBlocksIndex] + 1) * BIG_BLOCK_SIZE;
       // Echo "pos = $pos";.
-      for ($j = 0; $j < BIG_BLOCK_SIZE / 4; $j++) {
+      for ($bigBlockSize = 0; $bigBlockSize < BIG_BLOCK_SIZE / 4; $bigBlockSize++) {
         $this->bigBlockChain[$index] = get_int4d($this->data, $pos);
         $pos += 4;
         $index++;
@@ -144,7 +146,7 @@ final class OLERead {
 
     while ($sbdBlock !== -2) {
       $pos = ($sbdBlock + 1) * BIG_BLOCK_SIZE;
-      for ($j = 0; $j < BIG_BLOCK_SIZE / 4; $j++) {
+      for ($bigBlockSize = 0; $bigBlockSize < BIG_BLOCK_SIZE / 4; $bigBlockSize++) {
         $this->smallBlockChain[$index] = get_int4d($this->data, $pos);
         $pos += 4;
         $index++;

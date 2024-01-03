@@ -107,7 +107,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
       fseek($this->handle, $this->bomLength);
     }
 
-    $is_empty = feof($this->handle) && (trim(fread($this->handle, 1)) == '');
+    $is_empty = feof($this->handle) && (trim(fread($this->handle, 1)) === '');
     if ($is_empty) {
       throw new FileEmptyException($filepath);
     }

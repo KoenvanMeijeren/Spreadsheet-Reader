@@ -126,4 +126,9 @@
       <type>error</type>
       <message>Method name "%s" must not be prefixed with an underscore to indicate visibility</message>
   </rule>
+
+  <!-- Temporary disable global constants should not be used warning -->
+  <rule ref="DrupalPractice.Constants.GlobalConstant.GlobalConstant">
+    <severity>0</severity>
+  </rule>
 </ruleset>

@@ -96,7 +96,7 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
       $this->sheetIndexes = array_keys($this->inputFile->sheets);
 
       foreach ($this->sheetIndexes as $sheetIndex) {
-        $this->sheets[] = $this->inputFile->boundsheets[$sheetIndex]['name'];
+        $this->sheets[] = $this->inputFile->boundSheets[$sheetIndex]['name'];
       }
     }
 

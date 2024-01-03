@@ -448,7 +448,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
       $cellCount = 0;
 
       $cellHasSharedString = FALSE;
-
+      $index = NULL;
       while ($this->isValid = $this->worksheet->read()) {
         switch ($this->worksheet->name) {
           // Row end found.
@@ -489,7 +489,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
 
           // Cell value.
           case 'v':
-            if ($this->worksheet->nodeType === \XMLReader::END_ELEMENT) {
+            if ($this->worksheet->nodeType === \XMLReader::END_ELEMENT || $index === NULL) {
               continue 2;
             }
 

@@ -1,0 +1,78 @@
+includes:
+  	- vendor/phpstan/phpstan/conf/bleedingEdge.neon
+
+rules:
+    - Spatie\Ray\PHPStan\RemainingRayCallRule
+
+parameters:
+  level: 1
+  featureToggles:
+    notAnalysedTrait: false
+    looseComparison: false
+    disableCheckMissingIterableValueType: false
+    varTagType: false
+  checkDynamicProperties: false
+  checkMissingIterableValueType: false
+  checkGenericClassInNonGenericObjectType: false
+  checkTooWideReturnTypesInProtectedAndPublicMethods: false
+  checkAlwaysTrueInstanceof: true
+  checkAlwaysTrueStrictComparison: true
+  checkAlwaysTrueLooseComparison: true
+  checkExplicitMixedMissingReturn: true
+  checkFunctionNameCase: true
+  checkInternalClassCaseSensitivity: true
+  treatPhpDocTypesAsCertain: false
+  polluteScopeWithLoopInitialAssignments: true
+  polluteScopeWithAlwaysIterableForeach: true
+  reportMaybesInMethodSignatures: true
+  reportMaybesInPropertyPhpDocTypes: true
+  reportStaticMethodSignatures: false
+  reportAlwaysTrueInLastCondition: true
+  strictRules:
+  		allRules: true
+  		booleansInConditions: false
+  		requireParentConstructorCall: false
+  banned_code:
+      nodes:
+        # enable detection of echo
+        -
+          type: Stmt_Echo
+          functions: null
+
+        # enable detection of eval
+        -
+          type: Expr_Eval
+          functions: null
+
+        # enable detection of die/exit
+        -
+          type: Expr_Exit
+          functions: null
+
+        # enable detection of a set of functions
+        -
+          type: Expr_FuncCall
+          functions:
+            - dd
+            - debug_backtrace
+            - dump
+            - exec
+            - passthru
+            - phpinfo
+            - proc_open
+            - shell_exec
+            - system
+            - var_dump
+
+        # enable detection of shell execution by backticks
+        -
+          type: Expr_ShellExec
+          functions: null
+  paths:
+    - src/
+  parallel:
+    processTimeout: 300.0
+  customRulesetUsed: true
+  reportUnmatchedIgnoredErrors: true
+  ignoreErrors:
+    - '#Construct empty\(\) is not allowed. Use more strict comparison.#'
