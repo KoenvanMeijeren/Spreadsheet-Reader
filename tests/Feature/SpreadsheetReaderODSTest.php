@@ -4,7 +4,6 @@
  * @file
  */
 
-use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileEmptyException;
 use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
 use KoenVanMeijeren\SpreadsheetReader\Reader\SpreadsheetReaderInterface;
 use KoenVanMeijeren\SpreadsheetReader\SpreadsheetReader;
