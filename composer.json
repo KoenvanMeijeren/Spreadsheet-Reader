@@ -6,10 +6,26 @@
 	"type": "library",
 	"license": ["MIT"],
 	"scripts": {
-		"pest": "vendor/bin/pest --strict-global-state --disallow-test-output --fail-on-incomplete --fail-on-skipped --fail-on-notice --fail-on-deprecation --fail-on-risky --fail-on-warning",
-		"pest:parallel": "vendor/bin/pest --parallel --strict-global-state --disallow-test-output --fail-on-incomplete --fail-on-skipped --fail-on-risky --fail-on-warning",
-		"pest:only-new": "./vendor/bin/pest --dirty",
-		"pest:retry": "./vendor/bin/pest --retry",
+		"pest": [
+            "Composer\\Config::disableProcessTimeout",
+            "vendor/bin/pest --strict-global-state --disallow-test-output --fail-on-incomplete --fail-on-skipped --fail-on-notice --fail-on-deprecation --fail-on-risky --fail-on-warning"
+        ],
+		"pest:parallel": [
+            "Composer\\Config::disableProcessTimeout",
+            "vendor/bin/pest --parallel --strict-global-state --disallow-test-output --fail-on-incomplete --fail-on-skipped --fail-on-risky --fail-on-warning"
+        ],
+		"pest:coverage": [
+            "Composer\\Config::disableProcessTimeout",
+            "vendor/bin/pest --min=60 --parallel --coverage --coverage-html=coverage/ --strict-global-state --disallow-test-output --fail-on-incomplete --fail-on-skipped --fail-on-risky --fail-on-warning"
+        ],
+		"pest:only-new": [
+            "Composer\\Config::disableProcessTimeout",
+            "./vendor/bin/pest --dirty"
+        ],
+		"pest:retry": [
+            "Composer\\Config::disableProcessTimeout",
+            "./vendor/bin/pest --retry"
+        ],
 		"phpcbf": "vendor/bin/phpcbf -p -s --report=code,summary",
 		"phpcs": "vendor/bin/phpcs -p -s --report=code,summary",
         "phpstan": [
