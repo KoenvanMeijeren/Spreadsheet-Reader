@@ -156,16 +156,6 @@ final class SpreadsheetExcelReader {
   public array $colIndexes = [];
 
   /**
-   * The standard column width.
-   */
-  public int $standardColWidth = 0;
-
-  /**
-   * The default column width.
-   */
-  public int $defaultColWidth = 0;
-
-  /**
    * The bound sheets.
    */
   public array $boundSheets = [];
@@ -173,7 +163,7 @@ final class SpreadsheetExcelReader {
   /**
    * The format records.
    */
-  public array $formatRecords = [];
+  private array $formatRecords = [];
 
   /**
    * The font records.
@@ -183,7 +173,7 @@ final class SpreadsheetExcelReader {
   /**
    * The xf records.
    */
-  public array $xfRecords = [];
+  private array $xfRecords = [];
 
   /**
    * The col info.
@@ -198,7 +188,7 @@ final class SpreadsheetExcelReader {
   /**
    * The sst.
    */
-  public array $sst = [];
+  private array $sst = [];
 
   /**
    * The sheets.
@@ -208,7 +198,7 @@ final class SpreadsheetExcelReader {
   /**
    * The data.
    */
-  public mixed $data = NULL;
+  private mixed $data = NULL;
 
   /**
    * The OLE reader.
@@ -233,17 +223,17 @@ final class SpreadsheetExcelReader {
   /**
    * The row offset.
    */
-  public int $rowOffset = 1;
+  private int $rowOffset = 1;
 
   /**
    * The column offset.
    */
-  public int $columnOffset = 1;
+  private int $columnOffset = 1;
 
   /**
    * List of default date formats used by Excel.
    */
-  public array $dateFormats = [
+  private array $dateFormats = [
     0xe => "m/d/Y",
     0xf => "M-d-Y",
     0x10 => "d-M",
@@ -261,7 +251,7 @@ final class SpreadsheetExcelReader {
   /**
    * Default number formats used by Excel.
    */
-  public array $numberFormats = [
+  private array $numberFormats = [
     0x1 => "0",
     0x2 => "0.00",
     0x3 => "#,##0",
@@ -289,90 +279,9 @@ final class SpreadsheetExcelReader {
   ];
 
   /**
-   * The colors.
-   */
-  public array $colors = [
-    0x00 => "#000000",
-    0x01 => "#FFFFFF",
-    0x02 => "#FF0000",
-    0x03 => "#00FF00",
-    0x04 => "#0000FF",
-    0x05 => "#FFFF00",
-    0x06 => "#FF00FF",
-    0x07 => "#00FFFF",
-    0x08 => "#000000",
-    0x09 => "#FFFFFF",
-    0x0A => "#FF0000",
-    0x0B => "#00FF00",
-    0x0C => "#0000FF",
-    0x0D => "#FFFF00",
-    0x0E => "#FF00FF",
-    0x0F => "#00FFFF",
-    0x10 => "#800000",
-    0x11 => "#008000",
-    0x12 => "#000080",
-    0x13 => "#808000",
-    0x14 => "#800080",
-    0x15 => "#008080",
-    0x16 => "#C0C0C0",
-    0x17 => "#808080",
-    0x18 => "#9999FF",
-    0x19 => "#993366",
-    0x1A => "#FFFFCC",
-    0x1B => "#CCFFFF",
-    0x1C => "#660066",
-    0x1D => "#FF8080",
-    0x1E => "#0066CC",
-    0x1F => "#CCCCFF",
-    0x20 => "#000080",
-    0x21 => "#FF00FF",
-    0x22 => "#FFFF00",
-    0x23 => "#00FFFF",
-    0x24 => "#800080",
-    0x25 => "#800000",
-    0x26 => "#008080",
-    0x27 => "#0000FF",
-    0x28 => "#00CCFF",
-    0x29 => "#CCFFFF",
-    0x2A => "#CCFFCC",
-    0x2B => "#FFFF99",
-    0x2C => "#99CCFF",
-    0x2D => "#FF99CC",
-    0x2E => "#CC99FF",
-    0x2F => "#FFCC99",
-    0x30 => "#3366FF",
-    0x31 => "#33CCCC",
-    0x32 => "#99CC00",
-    0x33 => "#FFCC00",
-    0x34 => "#FF9900",
-    0x35 => "#FF6600",
-    0x36 => "#666699",
-    0x37 => "#969696",
-    0x38 => "#003366",
-    0x39 => "#339966",
-    0x3A => "#003300",
-    0x3B => "#333300",
-    0x3C => "#993300",
-    0x3D => "#993366",
-    0x3E => "#333399",
-    0x3F => "#333333",
-    0x40 => "#000000",
-    0x41 => "#FFFFFF",
-
-    0x43 => "#000000",
-    0x4D => "#000000",
-    0x4E => "#FFFFFF",
-    0x4F => "#000000",
-    0x50 => "#FFFFFF",
-    0x51 => "#000000",
-
-    0x7FFF => "#000000",
-  ];
-
-  /**
    * The line styles.
    */
-  public array $lineStyles = [
+  private array $lineStyles = [
     0x00 => "",
     0x01 => "Thin",
     0x02 => "Medium",
@@ -387,25 +296,6 @@ final class SpreadsheetExcelReader {
     0x0B => "Thin dash-dot-dotted",
     0x0C => "Medium dash-dot-dotted",
     0x0D => "Slanted medium dash-dotted",
-  ];
-
-  /**
-   * The line styles css.
-   */
-  public array $lineStylesCss = [
-    "Thin" => "1px solid",
-    "Medium" => "2px solid",
-    "Dashed" => "1px dashed",
-    "Dotted" => "1px dotted",
-    "Thick" => "3px solid",
-    "Double" => "double",
-    "Hair" => "1px solid",
-    "Medium dashed" => "2px dashed",
-    "Thin dash-dotted" => "1px dashed",
-    "Medium dash-dotted" => "2px dashed",
-    "Thin dash-dot-dotted" => "1px dashed",
-    "Medium dash-dot-dotted" => "2px dashed",
-    "Slanted medium dash-dotte" => "2px dashed",
   ];
 
   /**
@@ -429,9 +319,50 @@ final class SpreadsheetExcelReader {
   private bool $nineteenFour;
 
   /**
+   * Constructs a new instance.
+   */
+  public function __construct(string $file = '', bool $store_extended_info = TRUE, string $outputEncoding = '') {
+    $this->oleRead = new OLERead();
+
+    $this->setUtfEncoder();
+    if ($outputEncoding !== '') {
+      $this->setOutputEncoding($outputEncoding);
+    }
+
+    for ($index = 1; $index < 245; $index++) {
+      $name = strtolower(((($index - 1) / 26 >= 1) ? chr((int) (($index - 1) / 26 + 64)) : '') . chr(($index - 1) % 26 + 65));
+      $this->colNames[$name] = $index;
+      $this->colIndexes[$index] = $name;
+    }
+
+    $this->shouldStoreExtendedInfo = $store_extended_info;
+    if ($file !== "") {
+      $this->read($file);
+    }
+  }
+
+  /**
+   * Sets the encoding method.
+   *
+   * $encoder = 'iconv' or 'mb'
+   * Set iconv if you would like use 'iconv' for encode UTF-16LE to your
+   * encoding set mb if you would like use 'mb_convert_encoding' for encode
+   * UTF-16LE to your encoding.
+   */
+  public function setUtfEncoder(string $encoder = 'iconv'): void {
+    $this->encoderFunction = '';
+    if ($encoder === 'iconv') {
+      $this->encoderFunction = function_exists('iconv') ? 'iconv' : '';
+    }
+    elseif ($encoder === 'mb') {
+      $this->encoderFunction = function_exists('mb_convert_encoding') ? 'mb_convert_encoding' : '';
+    }
+  }
+
+  /**
    * Custom hex handling.
    */
-  public function encodeDigitWithHex(int $digit): string {
+  private function encodeDigitWithHex(int $digit): string {
     if ($digit < 16) {
       return "0" . dechex($digit);
     }
@@ -441,7 +372,7 @@ final class SpreadsheetExcelReader {
   /**
    * Dumps the hex contents of the string.
    */
-  public function dumpHexData(string $data, int $pos, int $length): string {
+  private function dumpHexData(string $data, int $pos, int $length): string {
     $info = "";
     for ($index = 0; $index <= $length; $index++) {
       $info .= ($index === 0 ? "" : " ") . $this->encodeDigitWithHex(ord($data[$pos + $index])) . (ord($data[$pos + $index]) > 31 ? "[" . $data[$pos + $index] . "]" : '');
@@ -450,485 +381,9 @@ final class SpreadsheetExcelReader {
   }
 
   /**
-   * Gets the column.
-   */
-  public function getCol(mixed $col): mixed {
-    if (is_string($col)) {
-      $col = strtolower($col);
-      if (isset($this->colNames[$col])) {
-        $col = $this->colNames[$col];
-      }
-    }
-    return $col;
-  }
-
-  /**
-   * Gets the value for a row and column.
-   */
-  public function val($row, $col, int $sheet = 0) {
-    $col = $this->getCol($col);
-    if (array_key_exists($row, $this->sheets[$sheet]['cells']) && array_key_exists($col, $this->sheets[$sheet]['cells'][$row])) {
-      return $this->sheets[$sheet]['cells'][$row][$col];
-    }
-    return "";
-  }
-
-  /**
-   * Gets the value.
-   */
-  public function value($row, $col, $sheet = 0) {
-    return $this->val($row, $col, $sheet);
-  }
-
-  /**
-   * Gets the cell info.
-   */
-  public function info($row, $col, $type = '', $sheet = 0) {
-    $col = $this->getCol($col);
-    if (array_key_exists('cellsInfo', $this->sheets[$sheet])
-                && array_key_exists($row, $this->sheets[$sheet]['cellsInfo'])
-                && array_key_exists($col, $this->sheets[$sheet]['cellsInfo'][$row])
-                && array_key_exists($type, $this->sheets[$sheet]['cellsInfo'][$row][$col])) {
-      return $this->sheets[$sheet]['cellsInfo'][$row][$col][$type];
-    }
-    return "";
-  }
-
-  /**
-   * Gets the cell type.
-   */
-  public function type($row, $col, $sheet = 0) {
-    return $this->info($row, $col, 'type', $sheet);
-  }
-
-  /**
-   * Gets the cell raw.
-   */
-  public function raw($row, $col, $sheet = 0) {
-    return $this->info($row, $col, 'raw', $sheet);
-  }
-
-  /**
-   * Gets the cell rowspan.
-   */
-  public function rowspan($row, $col, $sheet = 0) {
-    $val = $this->info($row, $col, 'rowspan', $sheet);
-    if ($val === "") {
-      return 1;
-    }
-    return $val;
-  }
-
-  /**
-   * Gets the cell colspan.
-   */
-  public function colspan($row, $col, $sheet = 0) {
-    $val = $this->info($row, $col, 'colspan', $sheet);
-    if ($val === "") {
-      return 1;
-    }
-    return $val;
-  }
-
-  /**
-   * Gets the cell hyperlink.
-   */
-  public function hyperlink($row, $col, $sheet = 0) {
-    $link = $this->sheets[$sheet]['cellsInfo'][$row][$col]['hyperlink'];
-    if ($link) {
-      return $link['link'];
-    }
-    return '';
-  }
-
-  /**
-   * Gets the row count.
-   */
-  public function rowcount($sheet = 0) {
-    return $this->sheets[$sheet]['numRows'];
-  }
-
-  /**
-   * Gets the col count.
-   */
-  public function colcount($sheet = 0) {
-    return $this->sheets[$sheet]['numCols'];
-  }
-
-  /**
-   * Gets the column width.
-   */
-  public function getColWidth($col, int $sheet = 0): float|int {
-    // Col width is actually the width of the number 0. So we have to estimate
-    // and come close.
-    return $this->colInfo[$sheet][$col]['width'] / 9142 * 200;
-  }
-
-  /**
-   * Gets the hidden col value.
-   */
-  public function isColHidden($col, int $sheet = 0): bool {
-    return (bool) $this->colInfo[$sheet][$col]['hidden'];
-  }
-
-  /**
-   * Gets the row height.
-   */
-  public function getRowHeight($row, int $sheet = 0) {
-    return $this->rowInfo[$sheet][$row]['height'];
-  }
-
-  /**
-   * Determines if the row is hidden.
-   */
-  public function isRowHidden($row, int $sheet = 0): bool {
-    return (bool) $this->rowInfo[$sheet][$row]['hidden'];
-  }
-
-  /**
-   * Gets the css styling.
-   */
-  public function style($row, $col, int $sheet = 0): string {
-    $css = "";
-    $font = $this->font($row, $col, $sheet);
-    if ($font !== "") {
-      $css .= "font-family:$font;";
-    }
-    $align = $this->align($row, $col, $sheet);
-    if ($align !== "") {
-      $css .= "text-align:$align;";
-    }
-    $height = $this->height($row, $col, $sheet);
-    if ($height !== "") {
-      $css .= "font-size:{$height}px;";
-    }
-    $bgcolor = $this->bgColor($row, $col, $sheet);
-    if ($bgcolor !== "") {
-      $bgcolor = $this->colors[$bgcolor];
-      $css .= "background-color:$bgcolor;";
-    }
-    $color = $this->color($row, $col, $sheet);
-    if ($color !== "") {
-      $css .= "color:$color;";
-    }
-    $bold = $this->bold($row, $col, $sheet);
-    if ($bold) {
-      $css .= "font-weight:bold;";
-    }
-    $italic = $this->italic($row, $col, $sheet);
-    if ($italic) {
-      $css .= "font-style:italic;";
-    }
-    $underline = $this->underline($row, $col, $sheet);
-    if ($underline) {
-      $css .= "text-decoration:underline;";
-    }
-    // Borders.
-    $bLeft = $this->borderLeft($row, $col, $sheet);
-    $bRight = $this->borderRight($row, $col, $sheet);
-    $bTop = $this->borderTop($row, $col, $sheet);
-    $bBottom = $this->borderBottom($row, $col, $sheet);
-    $bLeftCol = $this->borderLeftColor($row, $col, $sheet);
-    $bRightCol = $this->borderRightColor($row, $col, $sheet);
-    $bTopCol = $this->borderTopColor($row, $col, $sheet);
-    $bBottomCol = $this->borderBottomColor($row, $col, $sheet);
-    // Try to output the minimal required style.
-    if ($bLeft !== "" && $bLeft === $bRight && $bRight === $bTop && $bTop === $bBottom) {
-      $css .= "border:" . $this->lineStylesCss[$bLeft] . ";";
-    }
-    else {
-      if ($bLeft !== "") {
-        $css .= "border-left:" . $this->lineStylesCss[$bLeft] . ";";
-      }
-      if ($bRight !== "") {
-        $css .= "border-right:" . $this->lineStylesCss[$bRight] . ";";
-      }
-      if ($bTop !== "") {
-        $css .= "border-top:" . $this->lineStylesCss[$bTop] . ";";
-      }
-      if ($bBottom !== "") {
-        $css .= "border-bottom:" . $this->lineStylesCss[$bBottom] . ";";
-      }
-    }
-    // Only output border colors if there is an actual border specified.
-    if ($bLeft !== "" && $bLeftCol !== "") {
-      $css .= "border-left-color:" . $bLeftCol . ";";
-    }
-    if ($bRight !== "" && $bRightCol !== "") {
-      $css .= "border-right-color:" . $bRightCol . ";";
-    }
-    if ($bTop !== "" && $bTopCol !== "") {
-      $css .= "border-top-color:" . $bTopCol . ";";
-    }
-    if ($bBottom !== "" && $bBottomCol !== "") {
-      $css .= "border-bottom-color:" . $bBottomCol . ";";
-    }
-
-    return $css;
-  }
-
-  /**
-   * Gets the format.
-   */
-  public function format($row, $col, int $sheet = 0) {
-    return $this->info($row, $col, 'format', $sheet);
-  }
-
-  /**
-   * Gets the format color.
-   */
-  public function formatColor($row, $col, int $sheet = 0) {
-    return $this->info($row, $col, 'formatColor', $sheet);
-  }
-
-  /**
-   * Returns the xf record.
-   */
-  public function xfRecord($row, $col, int $sheet = 0) {
-    $xfIndex = $this->info($row, $col, 'xfIndex', $sheet);
-    if ($xfIndex !== "") {
-      return $this->xfRecords[$xfIndex];
-    }
-    return NULL;
-  }
-
-  /**
-   * Returns the xf property.
-   */
-  public function xfProperty($row, $col, int $sheet, $prop) {
-    $xfRecord = $this->xfRecord($row, $col, $sheet);
-    if ($xfRecord !== NULL) {
-      return $xfRecord[$prop];
-    }
-    return "";
-  }
-
-  /**
-   * Gets the alginment.
-   */
-  public function align($row, $col, int $sheet = 0) {
-    return $this->xfProperty($row, $col, $sheet, 'align');
-  }
-
-  /**
-   * Gets the bgcolor.
-   */
-  public function bgColor($row, $col, int $sheet = 0) {
-    return $this->xfProperty($row, $col, $sheet, 'bgColor');
-  }
-
-  /**
-   * Gets the border left.
-   */
-  public function borderLeft($row, $col, int $sheet = 0) {
-    return $this->xfProperty($row, $col, $sheet, 'borderLeft');
-  }
-
-  /**
-   * Gets the border right.
-   */
-  public function borderRight($row, $col, int $sheet = 0) {
-    return $this->xfProperty($row, $col, $sheet, 'borderRight');
-  }
-
-  /**
-   * Gets the border top.
-   */
-  public function borderTop($row, $col, int $sheet = 0) {
-    return $this->xfProperty($row, $col, $sheet, 'borderTop');
-  }
-
-  /**
-   * Gets the border bottom.
-   */
-  public function borderBottom($row, $col, int $sheet = 0) {
-    return $this->xfProperty($row, $col, $sheet, 'borderBottom');
-  }
-
-  /**
-   * Gets the border left color.
-   */
-  public function borderLeftColor($row, $col, int $sheet = 0) {
-    return $this->colors[$this->xfProperty($row, $col, $sheet, 'borderLeftColor')];
-  }
-
-  /**
-   * Gets the border right color.
-   */
-  public function borderRightColor($row, $col, int $sheet = 0) {
-    return $this->colors[$this->xfProperty($row, $col, $sheet, 'borderRightColor')];
-  }
-
-  /**
-   * Gets the border top color.
-   */
-  public function borderTopColor($row, $col, int $sheet = 0) {
-    return $this->colors[$this->xfProperty($row, $col, $sheet, 'borderTopColor')];
-  }
-
-  /**
-   * Gets the border bottom color.
-   */
-  public function borderBottomColor($row, $col, int $sheet = 0) {
-    return $this->colors[$this->xfProperty($row, $col, $sheet, 'borderBottomColor')];
-  }
-
-  /**
-   * Gets the font record.
-   */
-  public function fontRecord($row, $col, int $sheet = 0) {
-    $xfRecord = $this->xfRecord($row, $col, $sheet);
-    if ($xfRecord !== NULL) {
-      $font = $xfRecord['fontIndex'];
-      if ($font !== NULL) {
-        return $this->fontRecords[$font];
-      }
-    }
-    return NULL;
-  }
-
-  /**
-   * Gets the font property.
-   */
-  public function fontProperty($row, $col, int $sheet = 0, string $font_selected = '') {
-    $font = $this->fontRecord($row, $col, $sheet);
-    if ($font !== NULL) {
-      return $font[$font_selected];
-    }
-    return FALSE;
-  }
-
-  /**
-   * Gets the color.
-   */
-  public function color($row, $col, int $sheet = 0) {
-    $formatColor = $this->formatColor($row, $col, $sheet);
-    if ($formatColor !== "") {
-      return $formatColor;
-    }
-
-    $ci = $this->fontProperty($row, $col, $sheet, 'color');
-    return $this->rawColor($ci);
-  }
-
-  /**
-   * Gets the raw color.
-   */
-  public function rawColor($ci) {
-    if (($ci !== 0x7FFF) && ($ci !== '')) {
-      return $this->colors[$ci];
-    }
-    return "";
-  }
-
-  /**
-   * Gets the bold.
-   */
-  public function bold($row, $col, int $sheet = 0) {
-    return $this->fontProperty($row, $col, $sheet, 'bold');
-  }
-
-  /**
-   * Gets the italic.
-   */
-  public function italic($row, $col, int $sheet = 0) {
-    return $this->fontProperty($row, $col, $sheet, 'italic');
-  }
-
-  /**
-   * Gets the underline.
-   */
-  public function underline($row, $col, int $sheet = 0) {
-    return $this->fontProperty($row, $col, $sheet, 'under');
-  }
-
-  /**
-   * Gets the height.
-   */
-  public function height($row, $col, int $sheet = 0) {
-    return $this->fontProperty($row, $col, $sheet, 'height');
-  }
-
-  /**
-   * Gets the font.
-   */
-  public function font($row, $col, int $sheet = 0) {
-    return $this->fontProperty($row, $col, $sheet, 'font');
-  }
-
-  /**
-   * Dumps the spreadsheet data.
-   */
-  public function dump(bool $row_numbers = FALSE, bool $col_letters = FALSE, int $sheet = 0, string $table_class = 'excel'): string {
-    $out = "<table class=\"$table_class\" cellspacing=0>";
-    if ($col_letters) {
-      $out .= "<thead>\n\t<tr>";
-      if ($row_numbers) {
-        $out .= "\n\t\t<th>&nbsp</th>";
-      }
-      for ($i = 1; $i <= $this->colcount($sheet); $i++) {
-        $style = "width:" . ($this->getColWidth($i, $sheet)) . "px;";
-        if ($this->isColHidden($i, $sheet)) {
-          $style .= "display:none;";
-        }
-        $out .= "\n\t\t<th style=\"$style\">" . strtoupper($this->colIndexes[$i]) . "</th>";
-      }
-      $out .= "</tr></thead>\n";
-    }
-
-    $out .= "<tbody>\n";
-    for ($row = 1; $row <= $this->rowcount($sheet); $row++) {
-      $rowheight = $this->getRowHeight($row, $sheet);
-      $style = "height:" . ($rowheight * (4 / 3)) . "px;";
-      if ($this->isRowHidden($row, $sheet)) {
-        $style .= "display:none;";
-      }
-      $out .= "\n\t<tr style=\"$style\">";
-      if ($row_numbers) {
-        $out .= "\n\t\t<th>$row</th>";
-      }
-      for ($col = 1; $col <= $this->colcount($sheet); $col++) {
-        // Account for Rowspans/Colspans.
-        $rowspan = $this->rowspan($row, $col, $sheet);
-        $colspan = $this->colspan($row, $col, $sheet);
-        for ($i = 0; $i < $rowspan; $i++) {
-          for ($j = 0; $j < $colspan; $j++) {
-            if ($i > 0 || $j > 0) {
-              $this->sheets[$sheet]['cellsInfo'][$row + $i][$col + $j]['dontprint'] = 1;
-            }
-          }
-        }
-        if (!$this->sheets[$sheet]['cellsInfo'][$row][$col]['dontprint']) {
-          $style = $this->style($row, $col, $sheet);
-          if ($this->isColHidden($col, $sheet)) {
-            $style .= "display:none;";
-          }
-          $out .= "\n\t\t<td style=\"$style\"" . ($colspan > 1 ? " colspan=$colspan" : "") . ($rowspan > 1 ? " rowspan=$rowspan" : "") . ">";
-          $val = $this->val($row, $col, $sheet);
-          if ($val === '') {
-            $val = "&nbsp;";
-          }
-          else {
-            $val = htmlentities($val);
-            $link = $this->hyperlink($row, $col, $sheet);
-            if ($link !== '') {
-              $val = "<a href=\"$link\">$val</a>";
-            }
-          }
-          $out .= "<nobr>" . nl2br($val) . "</nobr>";
-          $out .= "</td>";
-        }
-      }
-      $out .= "</tr>\n";
-    }
-    $out .= "</tbody></table>";
-    return $out;
-  }
-
-  /**
    * Read a 16-bit string from the current position.
    */
-  public function read16BitString($data, $start): string {
+  private function read16BitString(string $data, int $start): string {
     $len = 0;
     while (ord($data[$start + $len]) + ord($data[$start + $len + 1]) > 0) {
       $len++;
@@ -939,7 +394,7 @@ final class SpreadsheetExcelReader {
   /**
    * ADDED by Matt Kruse for better formatting.
    */
-  public function formatValue($format, $num, $f): array {
+  private function formatValue(int|string|float $format, int $num, int|string|float $f): array {
     // 49==TEXT format
     // http://code.google.com/p/php-excel-reader/issues/detail?id=7
     if ((!$f && $format === "%s") || ($f === 49) || ($format === "GENERAL")) {
@@ -1013,54 +468,16 @@ final class SpreadsheetExcelReader {
   }
 
   /**
-   * Constructs a new instance.
-   */
-  public function __construct(string $file = '', bool $store_extended_info = TRUE, string $outputEncoding = '') {
-    $this->oleRead = new OLERead();
-    $this->setUtfEncoder();
-    if ($outputEncoding !== '') {
-      $this->setOutputEncoding($outputEncoding);
-    }
-    for ($i = 1; $i < 245; $i++) {
-      $name = strtolower(((($i - 1) / 26 >= 1) ? chr((int) (($i - 1) / 26 + 64)) : '') . chr(($i - 1) % 26 + 65));
-      $this->colNames[$name] = $i;
-      $this->colIndexes[$i] = $name;
-    }
-    $this->shouldStoreExtendedInfo = $store_extended_info;
-    if ($file !== "") {
-      $this->read($file);
-    }
-  }
-
-  /**
    * Set the encoding method.
    */
-  public function setOutputEncoding(string $encoding): void {
+  private function setOutputEncoding(string $encoding): void {
     $this->defaultEncoding = $encoding;
-  }
-
-  /**
-   * Sets the encoding method.
-   *
-   * $encoder = 'iconv' or 'mb'
-   * Set iconv if you would like use 'iconv' for encode UTF-16LE to your
-   * encoding set mb if you would like use 'mb_convert_encoding' for encode
-   * UTF-16LE to your encoding.
-   */
-  public function setUtfEncoder(string $encoder = 'iconv'): void {
-    $this->encoderFunction = '';
-    if ($encoder === 'iconv') {
-      $this->encoderFunction = function_exists('iconv') ? 'iconv' : '';
-    }
-    elseif ($encoder === 'mb') {
-      $this->encoderFunction = function_exists('mb_convert_encoding') ? 'mb_convert_encoding' : '';
-    }
   }
 
   /**
    * Read the spreadsheet file using OLE, then parse.
    */
-  public function read(string $filename): void {
+  private function read(string $filename): void {
     $res = $this->oleRead->read($filename);
 
     // Oops, something goes wrong (Darko Miljanovic).
@@ -1075,7 +492,7 @@ final class SpreadsheetExcelReader {
   /**
    * Parse a workbook.
    */
-  public function parse(): bool {
+  private function parse(): bool {
     $pos = 0;
     $data = $this->data;
 
@@ -1265,17 +682,6 @@ final class SpreadsheetExcelReader {
           ];
           break;
 
-        case SPREADSHEET_EXCEL_READER_TYPE_PALETTE:
-          $colors = ord($data[$pos + 4]) | ord($data[$pos + 5]) << 8;
-          for ($coli = 0; $coli < $colors; $coli++) {
-            $colOff = $pos + 2 + ($coli * 4);
-            $colr = ord($data[$colOff]);
-            $colg = ord($data[$colOff + 1]);
-            $colb = ord($data[$colOff + 2]);
-            $this->colors[0x07 + $coli] = '#' . $this->encodeDigitWithHex($colr) . $this->encodeDigitWithHex($colg) . $this->encodeDigitWithHex($colb);
-          }
-          break;
-
         case SPREADSHEET_EXCEL_READER_TYPE_XF:
           $fontIndexCode = (ord($data[$pos + 4]) | ord($data[$pos + 5]) << 8) - 1;
           $fontIndexCode = max(0, $fontIndexCode);
@@ -1424,13 +830,14 @@ final class SpreadsheetExcelReader {
       $this->sn = $key;
       $this->parseSheet($val['offset']);
     }
+
     return TRUE;
   }
 
   /**
    * Parse a worksheet.
    */
-  public function parseSheet($spos): int {
+  private function parseSheet(int $spos): int {
     $cont = TRUE;
     $data = $this->data;
     // Read BOF.
@@ -1687,14 +1094,6 @@ final class SpreadsheetExcelReader {
           }
           break;
 
-        case SPREADSHEET_EXCEL_READER_TYPE_DEFCOLWIDTH:
-          $this->defaultColWidth = ord($data[$spos + 4]) | ord($data[$spos + 5]) << 8;
-          break;
-
-        case SPREADSHEET_EXCEL_READER_TYPE_STANDARDWIDTH:
-          $this->standardColWidth = ord($data[$spos + 4]) | ord($data[$spos + 5]) << 8;
-          break;
-
         case SPREADSHEET_EXCEL_READER_TYPE_COLINFO:
           $colfrom = ord($data[$spos + 0]) | ord($data[$spos + 1]) << 8;
           $colto = ord($data[$spos + 2]) | ord($data[$spos + 3]) << 8;
@@ -1730,7 +1129,7 @@ final class SpreadsheetExcelReader {
   /**
    * Determine if a cell contains a date.
    */
-  public function isDate($spos): bool {
+  private function isDate(int $spos): bool {
     $xfindex = ord($this->data[$spos + 4]) | ord($this->data[$spos + 5]) << 8;
     return ($this->xfRecords[$xfindex]['type'] === 'date');
   }
@@ -1738,7 +1137,7 @@ final class SpreadsheetExcelReader {
   /**
    * Get the details for a particular cell.
    */
-  public function getCellDetails($spos, $numValue, $column) {
+  private function getCellDetails(int $spos, int $numValue, int $column): array {
     $xfindex = ord($this->data[$spos + 4]) | ord($this->data[$spos + 5]) << 8;
     $xfrecord = $this->xfRecords[$xfindex];
     $type = $xfrecord['type'];
@@ -1804,9 +1203,9 @@ final class SpreadsheetExcelReader {
   /**
    * Get the details for a particular cell.
    */
-  public function createNumber($spos): float|int {
-    $rknumhigh = $this->getInt4d($this->data, $spos + 10);
-    $rknumlow = $this->getInt4d($this->data, $spos + 6);
+  private function createNumber(int $stringPosition): float|int {
+    $rknumhigh = $this->getInt4d($this->data, $stringPosition + 10);
+    $rknumlow = $this->getInt4d($this->data, $stringPosition + 6);
     $sign = ($rknumhigh & 0x80000000) >> 31;
     $exp = ($rknumhigh & 0x7ff00000) >> 20;
     $mantissa = (0x100000 | ($rknumhigh & 0x000fffff));
@@ -1826,7 +1225,7 @@ final class SpreadsheetExcelReader {
   /**
    * Get the value for a particular cell.
    */
-  public function addCell($row, $col, $string, $info = NULL): void {
+  private function addCell(int $row, int $col, string|int|float $string, ?array $info = NULL): void {
     $this->sheets[$this->sn]['maxrow'] = max($this->sheets[$this->sn]['maxrow'], $row + $this->rowOffset);
     $this->sheets[$this->sn]['maxcol'] = max($this->sheets[$this->sn]['maxcol'], $col + $this->columnOffset);
     $this->sheets[$this->sn]['cells'][$row + $this->rowOffset][$col + $this->columnOffset] = $string;
@@ -1840,7 +1239,7 @@ final class SpreadsheetExcelReader {
   /**
    * Get the value for a particular cell.
    */
-  public function getIEEE754($rknum) { // phpcs:ignore
+  private function getIEEE754(int $rknum): int { // phpcs:ignore
     if (($rknum & 0x02) !== 0) {
       $value = $rknum >> 2;
     }
@@ -1869,7 +1268,7 @@ final class SpreadsheetExcelReader {
   /**
    * Convert a string from UTF-16LE to a specific encoding.
    */
-  public function encodeUtf16(string $string): string {
+  private function encodeUtf16(string $string): string {
     $result = $string;
     if ($this->defaultEncoding) {
       switch ($this->encoderFunction) {
@@ -1886,7 +1285,7 @@ final class SpreadsheetExcelReader {
   /**
    * Convert a number into a column name.
    */
-  public function getInt4d($data, $pos): int {
+  private function getInt4d(string $data, int $pos): int {
     $value = ord($data[$pos]) | (ord($data[$pos + 1]) << 8) | (ord($data[$pos + 2]) << 16) | (ord($data[$pos + 3]) << 24);
     if ($value >= 4294967294) {
       $value = -2;
