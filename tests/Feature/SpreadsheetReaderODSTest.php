@@ -186,6 +186,39 @@ it('can seek for a specific index', function () {
   $this->assertSame($expectedRow, $reader->current());
 });
 
+it('can seek for a value which is already traversed', function () {
+  // Arrange.
+  $filepath = get_mock_data_filepath('file_example_ODS_5000.ods');
+  $seek_index = 3;
+  $expected_row = [
+    '2',
+    'Mara',
+    'Hashimoto',
+    'Female',
+    'Great Britain',
+    '25',
+    '16/08/2016',
+    '1582',
+    '',
+  ];
+
+  // Act.
+  $reader = new SpreadsheetReader($filepath);
+
+  $last_row = [];
+  for ($index = 0; $index < $seek_index * 2; $index++) {
+    $reader->next();
+    $last_row = $reader->current();
+  }
+
+  $reader->seek($seek_index);
+
+  // Assert.
+  $this->assertSame($seek_index, $reader->key());
+  $this->assertSame($expected_row, $reader->current());
+  $this->assertNotSame($last_row, $reader->current());
+});
+
 it('does not rewind if the current position is already the desired key', function () {
   // Arrange.
   $filepath = get_mock_data_filepath('file_example_ODS_5000.ods');
