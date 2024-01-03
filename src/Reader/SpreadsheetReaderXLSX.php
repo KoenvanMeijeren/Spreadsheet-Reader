@@ -2,12 +2,21 @@
 
 namespace KoenVanMeijeren\SpreadsheetReader\Reader;
 
+use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
+use KoenVanMeijeren\SpreadsheetReader\Exceptions\XMLSharedStringsNotReadableException;
+use KoenVanMeijeren\SpreadsheetReader\Exceptions\XMLWorkbookNotReadableException;
+use KoenVanMeijeren\SpreadsheetReader\Exceptions\ZipfileNotReadableException;
+
 /**
  * Spreadsheet reader for XLSX files.
  *
  * @internal This class is not meant to be used directly. Use SpreadsheetReader.
  */
 final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
+
+  /**
+   * Cell type for shared strings.
+   */
   public const CELL_TYPE_SHARED_STR = 's';
 
   /**
@@ -29,22 +38,22 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
   /**
    * Path to the worksheet XML file.
    */
-  private ?string $worksheetPath = NULL;
+  private string $worksheetPath;
 
   /**
    * XML reader object for the worksheet XML file.
    */
-  private ?\XMLReader $worksheet = NULL;
+  private \XMLReader $worksheet;
 
   /**
    * Path to shared strings XML file.
    */
-  private ?string $sharedStringsPath = NULL;
+  private string $sharedStringsPath;
 
   /**
    * XML reader object for the shared strings XML file.
    */
-  private ?\XMLReader $sharedStrings = NULL;
+  private \XMLReader $sharedStrings;
 
   /**
    * Shared strings cache, if the number of shared strings is low enough.
@@ -54,7 +63,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
   /**
    * XML object for the workbook XML file.
    */
-  private ?\SimpleXMLElement $workbookXML = NULL;
+  private \SimpleXMLElement $workbookXML;
 
   /**
    * Temporary directory path.
@@ -113,10 +122,15 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
 
   /**
    * Constructs a new object.
+   *
+   * @throws \KoenVanMeijeren\SpreadsheetReader\Exceptions\XMLWorkbookNotReadableException
+   * @throws \KoenVanMeijeren\SpreadsheetReader\Exceptions\ZipfileNotReadableException
+   * @throws \KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException
+   * @throws \KoenVanMeijeren\SpreadsheetReader\Exceptions\XMLSharedStringsNotReadableException
    */
   public function __construct(string $filepath) {
     if (!is_readable($filepath)) {
-      throw new \RuntimeException('File not readable (' . $filepath . ')');
+      throw new FileNotReadableException($filepath);
     }
 
     $this->tempDir = sys_get_temp_dir();
@@ -126,25 +140,36 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
     $zip = new \ZipArchive();
     $zipStatus = $zip->open($filepath);
     if ($zipStatus !== TRUE) {
-      throw new \RuntimeException('File not readable (' . $filepath . ') (Error ' . $zipStatus . ')');
+      throw new ZipfileNotReadableException($filepath, $zipStatus);
     }
 
     // Getting the general workbook information.
-    if ($zip->locateName('xl/workbook.xml') !== FALSE) {
-      $this->workbookXML = new \SimpleXMLElement($zip->getFromName('xl/workbook.xml'));
+    if ($zip->locateName('xl/workbook.xml') === FALSE) {
+      throw new XMLWorkbookNotReadableException($filepath);
     }
+
+    $this->workbookXML = new \SimpleXMLElement((string) $zip->getFromName('xl/workbook.xml'));
 
     // Extracting the XMLs from the XLSX zip file.
-    if ($zip->locateName('xl/sharedStrings.xml') !== FALSE) {
-      $this->sharedStringsPath = $this->tempDir . 'xl' . DIRECTORY_SEPARATOR . 'sharedStrings.xml';
-      $zip->extractTo($this->tempDir, 'xl/sharedStrings.xml');
-      $this->tempFiles[] = $this->tempDir . 'xl' . DIRECTORY_SEPARATOR . 'sharedStrings.xml';
-
-      if (is_readable($this->sharedStringsPath)) {
-        $this->sharedStrings = \XMLReader::open($this->sharedStringsPath);
-        $this->prepareSharedStringCache();
-      }
+    if ($zip->locateName('xl/sharedStrings.xml') === FALSE) {
+      throw new XMLSharedStringsNotReadableException($filepath);
     }
+
+    $this->sharedStringsPath = $this->tempDir . 'xl' . DIRECTORY_SEPARATOR . 'sharedStrings.xml';
+    $zip->extractTo($this->tempDir, 'xl/sharedStrings.xml');
+    $this->tempFiles[] = $this->tempDir . 'xl' . DIRECTORY_SEPARATOR . 'sharedStrings.xml';
+
+    if (!is_readable($this->sharedStringsPath)) {
+      throw new XMLSharedStringsNotReadableException($this->sharedStringsPath);
+    }
+
+    $xml_reader = \XMLReader::open($this->sharedStringsPath);
+    if (!$xml_reader) {
+      throw new FileNotReadableException($this->sharedStringsPath);
+    }
+
+    $this->sharedStrings = $xml_reader;
+    $this->prepareSharedStringCache();
 
     // Initializes the sheets.
     $sheets = $this->sheets(); // phpcs:ignore
@@ -155,6 +180,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
       }
     }
 
+    $this->worksheet = new \XMLReader();
     $this->changeSheet(0);
     $zip->close();
   }
@@ -174,23 +200,10 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
       @rmdir($this->tempDir);
     }
 
-    if ($this->worksheet instanceof \XMLReader) {
-      $this->worksheet->close();
-      unset($this->worksheet);
-    }
+    $this->worksheet->close();
+    $this->sharedStrings->close();
 
-    unset($this->worksheetPath);
-
-    if ($this->sharedStrings instanceof \XMLReader) {
-      $this->sharedStrings->close();
-      unset($this->sharedStrings);
-    }
-
-    unset($this->sharedStringsPath);
-
-    if ($this->workbookXML) {
-      unset($this->workbookXML);
-    }
+    unset($this->worksheet, $this->worksheetPath, $this->sharedStrings, $this->sharedStringsPath, $this->workbookXML);
   }
 
   /**
@@ -211,7 +224,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
   /**
    * {@inheritDoc}
    */
-  public function changeSheet(int $index): bool {
+  public function changeSheet(int $index): void {
     $realSheetIndex = FALSE;
     $sheets = $this->sheets();
     if (isset($sheets[$index])) {
@@ -221,14 +234,12 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
 
     $tempWorksheetPath = $this->tempDir . 'xl/worksheets/sheet' . $realSheetIndex . '.xml';
 
-    if ($realSheetIndex !== FALSE && is_readable($tempWorksheetPath)) {
-      $this->worksheetPath = $tempWorksheetPath;
-
-      $this->rewind();
-      return TRUE;
+    if ($realSheetIndex === FALSE || !is_readable($tempWorksheetPath)) {
+      throw new \OutOfBoundsException("SpreadsheetError: Position {$index} not found!");
     }
 
-    return FALSE;
+    $this->worksheetPath = $tempWorksheetPath;
+    $this->rewind();
   }
 
   /**
@@ -245,7 +256,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
       }
     }
 
-    if (!$this->sharedStringCount || (self::SHARED_STRING_CACHE_LIMIT < $this->sharedStringCount && self::SHARED_STRING_CACHE_LIMIT !== NULL)) {
+    if (!$this->sharedStringCount || self::SHARED_STRING_CACHE_LIMIT < $this->sharedStringCount) {
       return;
     }
 
@@ -278,7 +289,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
    * Retrieves a shared string value by its index.
    */
   private function getSharedString(int $index): string {
-    if ((self::SHARED_STRING_CACHE_LIMIT === NULL || self::SHARED_STRING_CACHE_LIMIT > 0) && !empty($this->sharedStringCache)) {
+    if (!empty($this->sharedStringCache)) {
       return ($this->sharedStringCache[$index] ?? '');
     }
 
@@ -286,7 +297,12 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
     if ($this->sharedStringIndex > $index) {
       $this->isSSOpen = FALSE;
       $this->sharedStrings->close();
-      $this->sharedStrings = \XMLReader::open($this->sharedStringsPath);
+      $xml_reader = \XMLReader::open($this->sharedStringsPath);
+      if (!$xml_reader) {
+        throw new FileNotReadableException($this->sharedStringsPath);
+      }
+
+      $this->sharedStrings = $xml_reader;
       $this->sharedStringIndex = 0;
       $this->lastSharedStringValue = NULL;
       $this->isSSForwarded = FALSE;
@@ -296,7 +312,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
     if ($this->sharedStringIndex === 0 && !$this->sharedStringCount) {
       while ($this->sharedStrings->read()) {
         if ($this->sharedStrings->name === 'sst') {
-          $this->sharedStringCount = $this->sharedStrings->getAttribute('uniqueCount');
+          $this->sharedStringCount = (int) $this->sharedStrings->getAttribute('uniqueCount');
           break;
         }
       }
@@ -387,11 +403,14 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
     // Removed the check whether $this -> Index == 0 otherwise ChangeSheet
     // doesn't work properly. If the worksheet was already iterated, the XML
     // file is reopened. Otherwise, it should be at the beginning anyway.
-    if ($this->worksheet instanceof \XMLReader) {
-      $this->worksheet->close();
+    $this->worksheet->close();
+
+    $xml_reader = \XMLReader::open($this->worksheetPath);
+    if (!$xml_reader) {
+      throw new FileNotReadableException($this->worksheetPath ?? 'unknown');
     }
 
-    $this->worksheet = \XMLReader::open($this->worksheetPath);
+    $this->worksheet = $xml_reader;
 
     $this->isValid = TRUE;
     $this->isRowOpen = FALSE;
@@ -416,7 +435,6 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
    */
   public function next(): void {
     $this->currentRowIndex++;
-
     $this->currentRow = [];
 
     if (!$this->isRowOpen) {
@@ -428,7 +446,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
           $currentRowColumnCount = 0;
           if ($rowSpans) {
             $rowSpans = explode(':', $rowSpans);
-            $currentRowColumnCount = $rowSpans[1];
+            $currentRowColumnCount = (int) ($rowSpans[1] ?? 0);
           }
 
           if ($currentRowColumnCount > 0) {
@@ -467,8 +485,8 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
             }
 
             // Get the index of the cell.
-            $index = $this->worksheet->getAttribute('r');
-            $letter = preg_replace('{[^[:alpha:]]}S', '', $index);
+            $index = (string) $this->worksheet->getAttribute('r');
+            $letter = (string) preg_replace('{[^[:alpha:]]}S', '', $index);
             $index = self::indexFromColumnLetter($letter);
 
             $cellHasSharedString = $this->worksheet->getAttribute('t') === self::CELL_TYPE_SHARED_STR;
@@ -531,14 +549,12 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
    * {@inheritDoc}
    */
   public function count(): int {
+    // @phpstan-ignore-next-line
     return $this->currentRowIndex + 1;
   }
 
   /**
    * Takes the column letter and converts it to a numerical index (0-based)
-   *
-   * @param string $letter
-   *   Letter(s) to convert.
    *
    * @return int
    *   Numeric index (0-based) or boolean false if it cannot be calculated.
@@ -551,13 +567,13 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
       $ord = (ord($letter[$i]) - 64);
       if ($ord > 26) {
         // Something is very, very wrong.
-        return FALSE;
+        return 0;
       }
 
       $result += ($ord * (26 ** $j));
     }
 
-    return ($result - 1);
+    return $result - 1;
   }
 
 }

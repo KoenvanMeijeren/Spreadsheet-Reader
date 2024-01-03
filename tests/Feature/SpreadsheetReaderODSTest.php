@@ -311,3 +311,16 @@ it('can change the sheet', function () {
   $this->assertSame($expectedSheet1Row, $sheet1Row);
   $this->assertSame($expectedSheet2Row, $sheet2Row);
 });
+
+it('throws an exception when trying to change the sheet on non-existing index', function () {
+  // Arrange.
+  $filepath = get_mock_data_filepath('file_example_ODS_5000.ods');
+  $index = 1;
+
+  // Act & assert.
+  $this->expectException(OutOfBoundsException::class);
+  $this->expectExceptionMessage("SpreadsheetError: Position {$index} not found!");
+
+  $reader = new SpreadsheetReader($filepath);
+  $reader->changeSheet($index);
+});

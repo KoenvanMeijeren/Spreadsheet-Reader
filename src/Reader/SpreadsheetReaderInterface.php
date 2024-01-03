@@ -25,10 +25,8 @@ interface SpreadsheetReaderInterface extends \Iterator, \Countable {
    * Note that changing the sheet will rewind the file to the beginning, even if
    * the current sheet index is provided.
    *
-   * @return bool
-   *   True if sheet could be changed to the specified one,
-   *    false if not (for example, if incorrect index was provided).
+   * Throws exceptions if something goes wrong.
    */
-  public function changeSheet(int $index): bool;
+  public function changeSheet(int $index): void;
 
 }

@@ -2,6 +2,10 @@
 
 namespace KoenVanMeijeren\SpreadsheetReader\Reader;
 
+use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
+use KoenVanMeijeren\SpreadsheetReader\Exceptions\XMLContentNotReadableException;
+use KoenVanMeijeren\SpreadsheetReader\Exceptions\XMLWorkbookNotReadableException;
+
 /**
  * Spreadsheet reader for ODS files.
  *
@@ -12,12 +16,12 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
   /**
    * Path to temporary content file.
    */
-  private string $contentPath = '';
+  private string $contentPath;
 
   /**
    * XML reader object.
    */
-  private ?\XMLReader $content = NULL;
+  private \XMLReader $content;
 
   /**
    * Data about separate sheets in the file.
@@ -83,28 +87,35 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
       throw new \RuntimeException('File not readable (' . $filepath . ') (Error ' . $zipStatus . ')');
     }
 
-    if ($zip->locateName('content.xml') !== FALSE) {
-      $zip->extractTo($temporaryDirectoryPath, 'content.xml');
-      $this->contentPath = $temporaryDirectoryPath . 'content.xml';
-      $this->tempFiles[] = $this->contentPath;
+    if ($zip->locateName('content.xml') === FALSE) {
+      throw new XMLContentNotReadableException($filepath);
     }
+
+    $zip->extractTo($temporaryDirectoryPath, 'content.xml');
+    $this->contentPath = $temporaryDirectoryPath . 'content.xml';
+    $this->tempFiles[] = $this->contentPath;
 
     $zip->close();
 
-    if ($this->contentPath && is_readable($this->contentPath)) {
-      $this->content = \XMLReader::open($this->contentPath);
-      $this->isValid = TRUE;
+    if (!is_readable($this->contentPath)) {
+      throw new XMLWorkbookNotReadableException($this->contentPath);
     }
+
+    $xml_reader = \XMLReader::open($this->contentPath);
+    if (!$xml_reader) {
+      throw new FileNotReadableException($this->contentPath);
+    }
+
+    $this->content = $xml_reader;
+    $this->isValid = TRUE;
   }
 
   /**
    * Destructor, destroys all that remains (closes and deletes temp files)
    */
   public function __destruct() {
-    if ($this->content instanceof \XMLReader) {
-      $this->content->close();
-      unset($this->content);
-    }
+    $this->content->close();
+    unset($this->content);
 
     foreach ($this->tempFiles as $tempFile) {
       @unlink($tempFile);
@@ -124,18 +135,23 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
    * {@inheritdoc}
    */
   public function sheets(): array {
-    if ($this->sheets === [] && $this->isValid) {
-      $sheetReader = \XMLReader::open($this->contentPath);
-
-      while ($sheetReader->read()) {
-        if ($sheetReader->name === 'table:table') {
-          $this->sheets[] = $sheetReader->getAttribute('table:name');
-          $sheetReader->next();
-        }
-      }
-
-      $sheetReader->close();
+    if ($this->sheets !== [] || !$this->isValid) {
+      return $this->sheets;
     }
+
+    $sheetReader = \XMLReader::open($this->contentPath);
+    if (!$sheetReader) {
+      throw new FileNotReadableException($this->contentPath);
+    }
+
+    while ($sheetReader->read()) {
+      if ($sheetReader->name === 'table:table') {
+        $this->sheets[] = $sheetReader->getAttribute('table:name');
+        $sheetReader->next();
+      }
+    }
+
+    $sheetReader->close();
 
     return $this->sheets;
   }
@@ -143,16 +159,14 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
   /**
    * {@inheritdoc}
    */
-  public function changeSheet(int $index): bool {
+  public function changeSheet(int $index): void {
     $sheets = $this->sheets();
-    if (isset($sheets[$index])) {
-      $this->currentSheet = $index;
-      $this->rewind();
-
-      return TRUE;
+    if (!isset($sheets[$index])) {
+      throw new \OutOfBoundsException("SpreadsheetError: Position {$index} not found!");
     }
 
-    return FALSE;
+    $this->currentSheet = $index;
+    $this->rewind();
   }
 
   /**
@@ -167,7 +181,12 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
     // If the worksheet was already iterated, the XML file is reopened.
     // Otherwise, it should be at the beginning anyway.
     $this->content->close();
-    $this->content = \XMLReader::open($this->contentPath);
+    $sheetReader = \XMLReader::open($this->contentPath);
+    if (!$sheetReader) {
+      throw new FileNotReadableException($this->contentPath);
+    }
+
+    $this->content = $sheetReader;
     $this->isValid = TRUE;
 
     $this->isTableOpen = FALSE;
@@ -287,6 +306,7 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
    * {@inheritdoc}
    */
   public function count(): int {
+    // @phpstan-ignore-next-line
     return $this->currentRowIndex + 1;
   }
 

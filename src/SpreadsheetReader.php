@@ -5,6 +5,7 @@ namespace KoenVanMeijeren\SpreadsheetReader;
 use KoenVanMeijeren\SpreadsheetReader\Config\SpreadsheetReaderCSVConfig;
 use KoenVanMeijeren\SpreadsheetReader\Config\SpreadsheetReaderFileType;
 use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
+use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileTypeUnsupportedException;
 use KoenVanMeijeren\SpreadsheetReader\Reader\SpreadsheetReaderCSV;
 use KoenVanMeijeren\SpreadsheetReader\Reader\SpreadsheetReaderInterface;
 use KoenVanMeijeren\SpreadsheetReader\Reader\SpreadsheetReaderODS;
@@ -14,7 +15,7 @@ use KoenVanMeijeren\SpreadsheetReader\Reader\SpreadsheetReaderXLSX;
 /**
  * Main class for spreadsheet reading.
  */
-class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInterface {
+final class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInterface {
 
   /**
    * Handler for the file.
@@ -49,9 +50,10 @@ class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInterface
     $fileType = $this->getFileType($filepath, $originalFilename, $mimeType);
     $this->reader = match ($fileType) {
       SpreadsheetReaderFileType::XLSX => new SpreadsheetReaderXLSX($filepath),
-      SpreadsheetReaderFileType::CSV => new SpreadsheetReaderCSV($filepath, new SpreadsheetReaderCSVConfig()),
       SpreadsheetReaderFileType::XLS => new SpreadsheetReaderXLS($filepath),
       SpreadsheetReaderFileType::ODS => new SpreadsheetReaderODS($filepath),
+      SpreadsheetReaderFileType::CSV => new SpreadsheetReaderCSV($filepath, new SpreadsheetReaderCSVConfig()),
+      default => throw new FileTypeUnsupportedException($mimeType ?? $filepath),
     };
   }
 
@@ -59,7 +61,7 @@ class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInterface
    * Destructor, destroys all that remains (closes and deletes temp files).
    */
   public function __destruct() {
-    unset($this->reader, $this->fileType);
+    unset($this->reader);
   }
 
   /**
@@ -118,7 +120,8 @@ class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInterface
         'xlsx', 'xltx', 'xlsm', 'xltm' => SpreadsheetReaderFileType::XLSX,
         'xls', 'xlt' => SpreadsheetReaderFileType::XLS,
         'ods', 'odt' => SpreadsheetReaderFileType::ODS,
-        default => SpreadsheetReaderFileType::CSV,
+        'csv' => SpreadsheetReaderFileType::CSV,
+        default => SpreadsheetReaderFileType::UNSUPPORTED,
       };
     }
 
@@ -153,8 +156,8 @@ class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInterface
   /**
    * {@inheritDoc}
    */
-  public function changeSheet(int $index): bool {
-    return $this->reader->changeSheet($index);
+  public function changeSheet(int $index): void {
+    $this->reader->changeSheet($index);
   }
 
   /**
@@ -184,7 +187,6 @@ class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInterface
    */
   public function key(): int {
     return $this->reader->key();
-
   }
 
   /**
