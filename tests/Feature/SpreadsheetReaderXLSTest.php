@@ -8,6 +8,7 @@ use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
 use KoenVanMeijeren\SpreadsheetReader\Reader\SpreadsheetReaderInterface;
 use KoenVanMeijeren\SpreadsheetReader\SpreadsheetReader;
 
+// @todo: Fix count tests
 it('can open an XLS file', function () {
   // Arrange.
   $filepath = get_mock_data_filepath('file_example_XLS_5000.xls');
