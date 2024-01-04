@@ -84,6 +84,113 @@ parameters:
   			enabled: false
   		noConstructorParameterWithDefaultValue:
   			enabled: false
+  shipmonkRules:
+          allowComparingOnlyComparableTypes:
+              enabled: false
+          allowNamedArgumentOnlyInAttributes:
+              enabled: false
+          backedEnumGenerics:
+              enabled: true
+          classSuffixNaming:
+              enabled: true
+              superclassToSuffixMapping: []
+          enforceClosureParamNativeTypehint:
+              enabled: true
+              allowMissingTypeWhenInferred: false
+          enforceEnumMatch:
+              enabled: true
+          enforceIteratorToArrayPreserveKeys:
+              enabled: true
+          enforceListReturn:
+              enabled: true
+          enforceNativeReturnTypehint:
+              enabled: true
+          enforceReadonlyPublicProperty:
+              enabled: false
+          forbidArithmeticOperationOnNonNumber:
+              enabled: false
+              allowNumericString: false
+          forbidAssignmentNotMatchingVarDoc:
+              enabled: true
+              allowNarrowing: false
+          forbidCast:
+              enabled: true
+              blacklist: ['(object)', '(unset)']
+          forbidCheckedExceptionInCallable:
+              enabled: true
+              immediatelyCalledCallables:
+                  array_reduce: 1
+                  array_intersect_ukey: 2
+                  array_uintersect: 2
+                  array_uintersect_assoc: 2
+                  array_intersect_uassoc: 2
+                  array_uintersect_uassoc: [2, 3]
+                  array_diff_ukey: 2
+                  array_udiff: 2
+                  array_udiff_assoc: 2
+                  array_diff_uassoc: 2
+                  array_udiff_uassoc: [2, 3]
+                  array_filter: 1
+                  array_map: 0
+                  array_walk_recursive: 1
+                  array_walk: 1
+                  uasort: 1
+                  uksort: 1
+                  usort: 1
+              allowedCheckedExceptionCallables: []
+          forbidCheckedExceptionInYieldingMethod:
+              enabled: true
+          forbidCustomFunctions:
+              enabled: true
+              list: []
+          forbidEnumInFunctionArguments:
+              enabled: true
+          forbidFetchOnMixed:
+              enabled: true
+          forbidIdenticalClassComparison:
+              enabled: true
+              blacklist: ['DateTimeInterface']
+          forbidIncrementDecrementOnNonInteger:
+              enabled: false
+          forbidMatchDefaultArmForEnums:
+              enabled: false
+          forbidMethodCallOnMixed:
+              enabled: true
+          forbidNotNormalizedType:
+              enabled: true
+              checkDisjunctiveNormalForm: true
+          forbidNullInAssignOperations:
+              enabled: true
+              blacklist: ['??=']
+          forbidNullInBinaryOperations:
+              enabled: true
+              blacklist: ['===', '!==', '??']
+          forbidNullInInterpolatedString:
+              enabled: true
+          forbidPhpDocNullabilityMismatchWithNativeTypehint:
+              enabled: true
+          forbidProtectedEnumMethod:
+              enabled: true
+          forbidReturnValueInYieldingMethod:
+              enabled: true
+              reportRegardlessOfReturnType: false
+          forbidVariableTypeOverwriting:
+              enabled: true
+          forbidUnsetClassField:
+              enabled: false
+          forbidUselessNullableReturn:
+              enabled: true
+          forbidUnusedException:
+              enabled: true
+          forbidUnusedMatchResult:
+              enabled: true
+          requirePreviousExceptionPass:
+              enabled: true
+              reportEvenIfExceptionIsNotAcceptableByRethrownOne: true
+          uselessPrivatePropertyDefaultValue:
+              enabled: true
+          uselessPrivatePropertyNullability:
+              enabled: true
   paths:
     - src/
     - tests/
@@ -96,6 +203,14 @@ parameters:
     - '#Call to an undefined method Mockery#'
     - '#Mockery\\LegacyMockInterface given.#'
     - '#Construct empty\(\) is not allowed. Use more strict comparison.#'
+    - '#Using \(array\) is discouraged, please avoid using that.#'
+    - '#Using return statement in constructor is forbidden to be able to check useless default values.#'
     -
-    			message: '#Undefined variable: \$this#'
-    			path: tests/*
+      message: '#Undefined variable: \$this#'
+      path: tests/*
+    -
+      message: '#is prohibited on unknown type \(\$this\)#'
+      path: tests/*
+    -
+      message: '#Throwing checked exception#'
+      path: tests/*

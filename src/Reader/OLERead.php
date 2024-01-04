@@ -67,12 +67,12 @@ final class OLERead {
   /**
    * The workbook.
    */
-  private ?int $workbook = NULL;
+  private int $workbook;
 
   /**
    * The root entry.
    */
-  private ?int $rootEntry = NULL;
+  private int $rootEntry;
 
   /**
    * Read the header of the OLE file.

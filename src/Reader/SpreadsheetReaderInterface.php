@@ -14,7 +14,7 @@ interface SpreadsheetReaderInterface extends \Iterator, \Countable {
   /**
    * Retrieves an array with information about sheets in the current file.
    *
-   * @return array
+   * @return list<string>
    *   List of sheets (key is sheet index, value is name).
    */
   public function sheets(): array;

@@ -93,7 +93,8 @@
 		"thecodingmachine/phpstan-strict-rules": "^1.0",
 		"ergebnis/phpstan-rules": "^2.1",
 		"phpmd/phpmd": "^2.15",
-		"phpbench/phpbench": "^1.2"
+		"phpbench/phpbench": "^1.2",
+		"shipmonk/phpstan-rules": "^2.11"
 	},
 	"config": {
 		"allow-plugins": {

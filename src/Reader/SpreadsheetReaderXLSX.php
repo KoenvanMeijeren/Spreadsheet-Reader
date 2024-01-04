@@ -226,7 +226,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
    * {@inheritDoc}
    */
   public function changeSheet(int $index): void {
-    $realSheetIndex = FALSE;
+    $realSheetIndex = -1;
     $sheets = $this->sheets();
     if (isset($sheets[$index])) {
       $sheetIndexes = array_keys($this->sheets);
@@ -236,7 +236,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
     $tempWorksheetPath = $this->tempDir . 'xl/worksheets/sheet' . $realSheetIndex . '.xml';
     $this->tempFiles[] = $tempWorksheetPath;
 
-    if ($realSheetIndex === FALSE || !is_readable($tempWorksheetPath)) {
+    if (!is_readable($tempWorksheetPath)) {
       throw new \OutOfBoundsException("SpreadsheetError: Position {$index} not found!");
     }
 
@@ -447,8 +447,8 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
           $rowSpans = $this->worksheet->getAttribute('spans');
           $currentRowColumnCount = 0;
           if ($rowSpans) {
-            $rowSpans = explode(':', $rowSpans);
-            $currentRowColumnCount = (int) ($rowSpans[1] ?? 0);
+            $rowSpanParts = explode(':', $rowSpans);
+            $currentRowColumnCount = (int) ($rowSpanParts[1] ?? 0);
           }
 
           if ($currentRowColumnCount > 0) {
@@ -487,8 +487,8 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
             }
 
             // Get the index of the cell.
-            $index = (string) $this->worksheet->getAttribute('r');
-            $letter = (string) preg_replace('{[^[:alpha:]]}S', '', $index);
+            $cell_index = (string) $this->worksheet->getAttribute('r');
+            $letter = (string) preg_replace('{[^[:alpha:]]}S', '', $cell_index);
             $index = self::indexFromColumnLetter($letter);
 
             $cellHasSharedString = $this->worksheet->getAttribute('t') === self::CELL_TYPE_SHARED_STR;

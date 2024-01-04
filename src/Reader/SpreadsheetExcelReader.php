@@ -701,15 +701,16 @@ final class SpreadsheetExcelReader {
           }
 
           $fillPattern = (ord($data[$pos + 21]) & 0xFC) >> 2;
-          if ($fillPattern === 0) {
-            $bgcolor = "";
-          }
 
           $xf = [];
+          $xf['bgColor'] = $bgcolor;
+          if ($fillPattern === 0) {
+            $xf['bgColor'] = "";
+          }
+
           $xf['formatIndex'] = $indexCode;
           $xf['align'] = $align;
           $xf['fontIndex'] = $fontIndexCode;
-          $xf['bgColor'] = $bgcolor;
           $xf['fillPattern'] = $fillPattern;
 
           $border = ord($data[$pos + 14]) | (ord($data[$pos + 15]) << 8) | (ord($data[$pos + 16]) << 16) | (ord($data[$pos + 17]) << 24);
@@ -1238,7 +1239,7 @@ final class SpreadsheetExcelReader {
     $this->sheets[$this->sn]['maxrow'] = max($this->sheets[$this->sn]['maxrow'], $row + $this->rowOffset);
     $this->sheets[$this->sn]['maxcol'] = max($this->sheets[$this->sn]['maxcol'], $col + $this->columnOffset);
     $this->sheets[$this->sn]['cells'][$row + $this->rowOffset][$col + $this->columnOffset] = $string;
-    if ($this->shouldStoreExtendedInfo && $info) {
+    if ($this->shouldStoreExtendedInfo && $info !== NULL && $info !== []) {
       foreach ($info as $key => $val) {
         $this->sheets[$this->sn]['cellsInfo'][$row + $this->rowOffset][$col + $this->columnOffset][$key] = $val;
       }

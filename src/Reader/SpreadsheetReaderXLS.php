@@ -97,7 +97,7 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
       }
     }
 
-    return $this->sheets;
+    return array_values($this->sheets);
   }
 
   /**
@@ -163,7 +163,7 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
         return;
       }
 
-      $this->currentRow = ($this->currentRow + $this->emptyRow);
+      $this->currentRow += $this->emptyRow;
       ksort($this->currentRow);
 
       $this->currentRow = array_values($this->currentRow);
