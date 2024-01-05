@@ -65,85 +65,79 @@ final class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInt
   }
 
   /**
-   * Determines the type of the file and sets it.
+   * Determines the type of the file and returns it.
    */
   private function getFileType(string $filepath, ?string $originalFilename, ?string $mimeType): SpreadsheetReaderFileType {
-    if (!$originalFilename) {
-      $originalFilename = $filepath;
-    }
-
+    $originalFilename ??= $filepath;
     $fileExtension = strtolower(pathinfo($originalFilename, PATHINFO_EXTENSION));
 
-    $fileType = NULL;
-    switch ($mimeType) {
-      case 'text/csv':
-      case 'text/comma-separated-values':
-      case 'text/plain':
-        $fileType = SpreadsheetReaderFileType::CSV;
-        break;
-
-      case 'application/vnd.ms-excel':
-      case 'application/msexcel':
-      case 'application/x-msexcel':
-      case 'application/x-ms-excel':
-      case 'application/x-excel':
-      case 'application/x-dos_ms_excel':
-      case 'application/xls':
-      case 'application/xlt':
-      case 'application/x-xls':
-        // Excel does weird stuff.
-        $fileType = SpreadsheetReaderFileType::XLS;
-        if (in_array($fileExtension, ['csv', 'tsv', 'txt'], TRUE)) {
-          $fileType = SpreadsheetReaderFileType::CSV;
-        }
-        break;
-
-      case 'application/vnd.oasis.opendocument.spreadsheet':
-      case 'application/vnd.oasis.opendocument.spreadsheet-template':
-        $fileType = SpreadsheetReaderFileType::ODS;
-        break;
-
-      case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-      case 'application/vnd.openxmlformats-officedocument.spreadsheetml.template':
-      case 'application/xlsx':
-      case 'application/xltx':
-        $fileType = SpreadsheetReaderFileType::XLSX;
-        break;
-
-      case 'application/xml':
-        // Excel 2004 xml format uses this.
-        break;
-    }
-
+    $fileType = $this->getFileTypeByMimeType($mimeType, $fileExtension);
     if (!$fileType) {
-      $fileType = match ($fileExtension) {
-        'xlsx', 'xltx', 'xlsm', 'xltm' => SpreadsheetReaderFileType::XLSX,
-        'xls', 'xlt' => SpreadsheetReaderFileType::XLS,
-        'ods', 'odt' => SpreadsheetReaderFileType::ODS,
-        'csv' => SpreadsheetReaderFileType::CSV,
-        default => SpreadsheetReaderFileType::UNSUPPORTED,
-      };
+      $fileType = $this->getFileTypeByExtension($fileExtension);
     }
 
     // Pre-checking XLS files, in case they are renamed CSV or XLS  X files.
     if ($fileType === SpreadsheetReaderFileType::XLS) {
-      $this->reader = new SpreadsheetReaderXLS($filepath);
-      if (!$this->reader->valid()) {
-        $this->reader->__destruct();
-
-        $zip = new \ZipArchive();
-        $zip_file = $zip->open($filepath);
-
-        $fileType = SpreadsheetReaderFileType::CSV;
-        if (is_resource($zip_file)) {
-          $fileType = SpreadsheetReaderFileType::XLSX;
-        }
-
-        $zip->close();
-      }
+      $fileType = $this->checkXlsFileType($filepath);
     }
 
     return $fileType;
+  }
+
+  /**
+   * Gets the file type by mime type.
+   */
+  private function getFileTypeByMimeType(?string $mimeType, string $fileExtension): ?SpreadsheetReaderFileType {
+    return match ($mimeType) {
+      'text/csv', 'text/comma-separated-values', 'text/plain' => SpreadsheetReaderFileType::CSV,
+      'application/vnd.ms-excel', 'application/msexcel', 'application/x-msexcel',
+      'application/x-ms-excel', 'application/x-excel', 'application/x-dos_ms_excel',
+      'application/xls', 'application/xlt', 'application/x-xls' => in_array($fileExtension, ['csv', 'tsv', 'txt'], TRUE)
+        ? SpreadsheetReaderFileType::CSV
+        : SpreadsheetReaderFileType::XLS,
+      'application/vnd.oasis.opendocument.spreadsheet',
+      'application/vnd.oasis.opendocument.spreadsheet-template' => SpreadsheetReaderFileType::ODS,
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.template',
+      'application/xlsx', 'application/xltx' => SpreadsheetReaderFileType::XLSX,
+      default => NULL,
+    };
+  }
+
+  /**
+   * Gets the file type by extension.
+   */
+  private function getFileTypeByExtension(string $fileExtension): SpreadsheetReaderFileType {
+    return match ($fileExtension) {
+      'xlsx', 'xltx', 'xlsm', 'xltm' => SpreadsheetReaderFileType::XLSX,
+      'xls', 'xlt' => SpreadsheetReaderFileType::XLS,
+      'ods', 'odt' => SpreadsheetReaderFileType::ODS,
+      'csv' => SpreadsheetReaderFileType::CSV,
+      default => SpreadsheetReaderFileType::UNSUPPORTED,
+    };
+  }
+
+  /**
+   * Checks if the file is an XLS file.
+   */
+  private function checkXlsFileType(string $filepath): SpreadsheetReaderFileType {
+    $this->reader = new SpreadsheetReaderXLS($filepath);
+    if (!$this->reader->valid()) {
+      $this->reader->__destruct();
+
+      $zip = new \ZipArchive();
+      $zip_file = $zip->open($filepath);
+
+      $fileType = SpreadsheetReaderFileType::CSV;
+      if (is_resource($zip_file)) {
+        $fileType = SpreadsheetReaderFileType::XLSX;
+      }
+
+      $zip->close();
+      return $fileType;
+    }
+
+    return SpreadsheetReaderFileType::XLS;
   }
 
   /**

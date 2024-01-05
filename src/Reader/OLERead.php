@@ -78,29 +78,72 @@ final class OLERead {
    * Read the header of the OLE file.
    */
   public function read(string $filename): bool {
-    // Check if file exist and is readable (Darko Miljanovic)
+    if (!$this->isValidFile($filename)) {
+      return FALSE;
+    }
+
+    $this->data = file_get_contents($filename);
+    if (!$this->data) {
+      return FALSE;
+    }
+
+    if (!$this->isValidIdentifier()) {
+      $this->error = 1;
+      return FALSE;
+    }
+
+    $this->readHeaderInfo();
+    $this->readBigBlockDepot();
+    $this->readSmallBlockDepot();
+    $this->readRootData();
+    $this->readPropertySets();
+
+    return TRUE;
+  }
+
+  /**
+   * Determines if the file is a valid OLE file.
+   */
+  private function isValidFile(string $filename): bool {
     if (!is_readable($filename)) {
       $this->error = 1;
       return FALSE;
     }
-    $this->data = file_get_contents($filename);
-    if (!$this->data) {
-      $this->error = 1;
-      return FALSE;
-    }
+
+    return TRUE;
+  }
+
+  /**
+   * Determines if the file is a valid OLE file.
+   */
+  private function isValidIdentifier(): bool {
     if (!str_starts_with($this->data, IDENTIFIER_OLE)) {
       $this->error = 1;
       return FALSE;
     }
+
+    return TRUE;
+  }
+
+  /**
+   * Read the header info.
+   */
+  private function readHeaderInfo(): void {
     $this->numBigBlockDepotBlocks = get_int4d($this->data, NUM_BIG_BLOCK_DEPOT_BLOCKS_POS);
     $this->sbdStartBlock = get_int4d($this->data, SMALL_BLOCK_DEPOT_BLOCK_POS);
     $this->rootStartBlock = get_int4d($this->data, ROOT_START_BLOCK_POS);
     $this->extensionBlock = get_int4d($this->data, EXTENSION_BLOCK_POS);
     $this->numExtensionBlocks = get_int4d($this->data, NUM_EXTENSION_BLOCK_POS);
+  }
 
+  /**
+   * Read the big block depot.
+   */
+  private function readBigBlockDepot(): void {
     $bigBlockDepotBlocks = [];
     $pos = BIG_BLOCK_DEPOT_BLOCKS_POS;
     $bbdBlocks = $this->numBigBlockDepotBlocks;
+
     if ($this->numExtensionBlocks !== 0) {
       $bbdBlocks = (BIG_BLOCK_SIZE - BIG_BLOCK_DEPOT_BLOCKS_POS) / 4;
     }
@@ -125,41 +168,54 @@ final class OLERead {
       }
     }
 
-    // readBigBlockDepot.
+    $this->readBigBlockChain($bigBlockDepotBlocks);
+  }
+
+  /**
+   * Read the big blockchain.
+   */
+  private function readBigBlockChain(array $bigBlockDepotBlocks): void {
     $index = 0;
     $this->bigBlockChain = [];
 
-    for ($numBigBlockDepotBlocksIndex = 0; $numBigBlockDepotBlocksIndex < $this->numBigBlockDepotBlocks; $numBigBlockDepotBlocksIndex++) {
-      $pos = ($bigBlockDepotBlocks[$numBigBlockDepotBlocksIndex] + 1) * BIG_BLOCK_SIZE;
-      // Echo "pos = $pos";.
+    foreach ($bigBlockDepotBlocks as $numBigBlockDepotBlocksIndex => $value) {
+      $pos = ($value + 1) * BIG_BLOCK_SIZE;
+
       for ($bigBlockSize = 0; $bigBlockSize < BIG_BLOCK_SIZE / 4; $bigBlockSize++) {
         $this->bigBlockChain[$index] = get_int4d($this->data, $pos);
         $pos += 4;
         $index++;
       }
     }
+  }
 
-    // readSmallBlockDepot();
+  /**
+   * Read the small block depot.
+   */
+  private function readSmallBlockDepot(): void {
     $index = 0;
     $sbdBlock = $this->sbdStartBlock;
     $this->smallBlockChain = [];
 
     while ($sbdBlock !== -2) {
       $pos = ($sbdBlock + 1) * BIG_BLOCK_SIZE;
+
       for ($bigBlockSize = 0; $bigBlockSize < BIG_BLOCK_SIZE / 4; $bigBlockSize++) {
         $this->smallBlockChain[$index] = get_int4d($this->data, $pos);
         $pos += 4;
         $index++;
       }
+
       $sbdBlock = $this->bigBlockChain[$sbdBlock];
     }
+  }
 
-    // readData(rootStartBlock)
+  /**
+   * Read the root data.
+   */
+  private function readRootData(): void {
     $block = $this->rootStartBlock;
     $this->entry = $this->readData($block);
-    $this->readPropertySets();
-
-    return TRUE;
   }
 
   /**
