@@ -35,14 +35,14 @@ it('can open an XLS file', function () {
 it('can open an empty XLS file', function () {
   // Arrange.
   $filepath = get_mock_data_filepath('file_example_XLS_empty.xls');
-  $expectedHeaderRow = [1 => '', 2 => '', 3 => '', 4 => '', 5 => '', 6 => '', 7 => ''];
+  $expectedHeaderRow = [];
 
   // Act.
   $reader = new SpreadsheetReader($filepath);
 
   // Assert.
   $this->assertCount(1, $reader->sheets());
-  $this->assertSame(5000, $reader->count());
+  $this->assertSame(0, $reader->count());
   $this->assertSame(0, $reader->key());
   $this->assertSame($expectedHeaderRow, $reader->current());
 });
@@ -52,8 +52,8 @@ it('can open an XLS file with only a header', function () {
   $filepath = get_mock_data_filepath('file_example_XLS_only_header.xls');
   $expectedHeaderRow = [
     '',
-    'First Name',
-    'Last Name',
+    'First name',
+    'Last name',
     'Gender',
     'Country',
     'Age',
@@ -68,7 +68,7 @@ it('can open an XLS file with only a header', function () {
 
   // Assert.
   $this->assertCount(1, $reader->sheets());
-  $this->assertSame(5000, $reader->count());
+  $this->assertSame(1, $reader->count());
   $this->assertSame(0, $reader->key());
   $this->assertSame($expectedHeaderRow, $reader->current());
 });
@@ -96,6 +96,7 @@ it('can traverse through the XLS file', function () {
     '15/10/2017',
     1562,
   ];
+  $expectedRowCount = 5001;
   $expectedRowIndex = 5002;
 
   // Act.
@@ -103,14 +104,14 @@ it('can traverse through the XLS file', function () {
 
   // Assert.
   $this->assertCount(1, $reader->sheets());
-  $this->assertSame(5001, $reader->count());
+  $this->assertSame($expectedRowCount, $reader->count());
   $this->assertSame(0, $reader->key());
   $this->assertSame($expectedHeaderRow, $reader->current());
 
   $reader->next();
   $this->assertSame(2, $reader->key());
   $this->assertSame($expectedFirstDataRow, $reader->current());
-  $this->assertSame(5001, $reader->count());
+  $this->assertSame($expectedRowCount, $reader->count());
 
   while ($reader->valid()) {
       $reader->next();
@@ -118,7 +119,7 @@ it('can traverse through the XLS file', function () {
 
   $this->assertFalse($reader->valid());
   $this->assertSame($expectedRowIndex, $reader->key());
-  $this->assertSame((5001), $reader->count());
+  $this->assertSame($expectedRowCount, $reader->count());
 });
 
 it('can rewind the reader', function () {

@@ -22,11 +22,6 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
   private int $index = 0;
 
   /**
-   * Whether the file has an error.
-   */
-  private bool $hasError = FALSE;
-
-  /**
    * Sheet information.
    */
   private array $sheets = [];
@@ -69,11 +64,6 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
     $this->reader = new SpreadsheetExcelReader($filepath, FALSE, 'UTF-8');
     $this->reader->setUtfEncoder('mb');
 
-    if (empty($this->reader->sheets)) {
-      $this->hasError = TRUE;
-      return;
-    }
-
     $this->changeSheet(0);
   }
 
@@ -97,7 +87,7 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
       }
     }
 
-    return $this->sheets;
+    return array_values($this->sheets);
   }
 
   /**
@@ -113,10 +103,11 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
     $this->currentSheet = $this->sheetIndexes[$index];
 
     $columnCount = $this->reader->sheets[$this->currentSheet]['numCols'];
+    $cells = $this->reader->sheets[$this->currentSheet]['cells'] ?? [];
     $this->rowCount = $this->reader->sheets[$this->currentSheet]['numRows'];
 
     // For the case when the reader doesn't have the row count set correctly.
-    if (!$this->rowCount && count($this->reader->sheets[$this->currentSheet]['cells'])) {
+    if (!$this->rowCount && count($cells)) {
       end($this->reader->sheets[$this->currentSheet]['cells']);
       $this->rowCount = (int) key($this->reader->sheets[$this->currentSheet]['cells']);
     }
@@ -153,17 +144,13 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
     // it's fully possible that an empty row will not be present at all.
     $this->index++;
 
-    if ($this->hasError) {
-      return;
-    }
-
     if (isset($this->reader->sheets[$this->currentSheet]['cells'][$this->index])) {
       $this->currentRow = $this->reader->sheets[$this->currentSheet]['cells'][$this->index];
       if (!$this->currentRow) {
         return;
       }
 
-      $this->currentRow = ($this->currentRow + $this->emptyRow);
+      $this->currentRow += $this->emptyRow;
       ksort($this->currentRow);
 
       $this->currentRow = array_values($this->currentRow);
@@ -184,11 +171,7 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
    * {@inheritdoc}
    */
   public function valid(): bool {
-    if ($this->hasError) {
-      return FALSE;
-    }
-
-    return ($this->index <= $this->rowCount);
+    return $this->index <= $this->rowCount;
   }
 
   /**
@@ -196,7 +179,7 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
    */
   public function count(): int {
     // @phpstan-ignore-next-line
-    return $this->hasError ? 0 : $this->rowCount;
+    return $this->rowCount;
   }
 
 }

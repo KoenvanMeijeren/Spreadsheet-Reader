@@ -56,7 +56,7 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
   /**
    * Whether the file is valid.
    */
-  private bool $isValid = FALSE;
+  private bool $isValid;
 
   /**
    * Temporary directory path.
@@ -140,7 +140,7 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
    */
   public function sheets(): array {
     if ($this->sheets !== [] || !$this->isValid) {
-      return $this->sheets;
+      return array_values($this->sheets);
     }
 
     $sheetReader = \XMLReader::open($this->contentPath);
@@ -150,14 +150,14 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
 
     while ($sheetReader->read()) {
       if ($sheetReader->name === 'table:table') {
-        $this->sheets[] = $sheetReader->getAttribute('table:name');
+        $this->sheets[] = (string) ($sheetReader->getAttribute('table:name') ?? 'unknown');
         $sheetReader->next();
       }
     }
 
     $sheetReader->close();
 
-    return $this->sheets;
+    return array_values($this->sheets);
   }
 
   /**
