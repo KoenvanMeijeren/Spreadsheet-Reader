@@ -207,9 +207,6 @@ parameters:
     - '#Using return statement in constructor is forbidden to be able to check useless default values.#'
     - '#Cannot cast mixed to int.#'
     -
-      message: '##'
-      path: src/ExcelReader/SpreadsheetExcelReader.php
-    -
       message: '#Call to an undefined method#'
       path: tests/Architecture/*
     -

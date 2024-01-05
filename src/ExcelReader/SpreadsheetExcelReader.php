@@ -165,7 +165,7 @@ final class SpreadsheetExcelReader {
   /**
    * The data.
    */
-  private mixed $data = NULL;
+  private string $data = '';
 
   /**
    * The OLE reader.

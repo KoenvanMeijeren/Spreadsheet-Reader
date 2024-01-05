@@ -171,7 +171,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
   /**
    * {@inheritDoc}
    */
-  public function current(): mixed {
+  public function current(): array {
     if ($this->currentRowIndex === 0 && $this->currentRow === []) {
       $this->next();
       $this->currentRowIndex--;
