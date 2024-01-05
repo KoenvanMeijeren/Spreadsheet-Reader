@@ -282,6 +282,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
    * Retrieves a shared string value by its index.
    *
    * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+   * @SuppressWarnings(PHPMD.NPathComplexity)
    */
   private function getSharedString(int $index): string {
     if (!empty($this->sharedStringCache)) {

@@ -20,7 +20,7 @@
       <property name="reportLevel" value="11"/>
     </properties>
   </rule>
-<!--  <rule ref="rulesets/codesize.xml/NPathComplexity"/>-->
+  <rule ref="rulesets/codesize.xml/NPathComplexity"/>
   <rule ref="rulesets/codesize.xml/ExcessiveMethodLength">
     <properties>
       <property name="minimum" value="400"/>
