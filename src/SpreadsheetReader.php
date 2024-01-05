@@ -87,9 +87,7 @@ final class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInt
       'text/csv', 'text/comma-separated-values', 'text/plain' => SpreadsheetReaderFileType::CSV,
       'application/vnd.ms-excel', 'application/msexcel', 'application/x-msexcel',
       'application/x-ms-excel', 'application/x-excel', 'application/x-dos_ms_excel',
-      'application/xls', 'application/xlt', 'application/x-xls' => in_array($fileExtension, ['csv', 'tsv', 'txt'], TRUE)
-        ? SpreadsheetReaderFileType::CSV
-        : SpreadsheetReaderFileType::XLS,
+      'application/xls', 'application/xlt', 'application/x-xls' => SpreadsheetReaderFileType::XLS,
       'application/vnd.oasis.opendocument.spreadsheet',
       'application/vnd.oasis.opendocument.spreadsheet-template' => SpreadsheetReaderFileType::ODS,
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

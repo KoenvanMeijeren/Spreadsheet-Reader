@@ -95,28 +95,11 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
     $bom16 = bin2hex((string) fread($this->handle, 2));
     if ($bom16 === 'fffe') {
       $this->encoding = 'UTF-16LE';
-      // $this -> Encoding = 'UTF-16';
       $this->bomLength = 2;
     }
     elseif ($bom16 === 'feff') {
       $this->encoding = 'UTF-16BE';
-      // $this -> Encoding = 'UTF-16';
       $this->bomLength = 2;
-    }
-
-    if (!$this->bomLength) {
-      fseek($this->handle, 0);
-      $bom32 = bin2hex((string) fread($this->handle, 4));
-      if ($bom32 === '0000feff') {
-        // $this -> Encoding = 'UTF-32BE';
-        $this->encoding = 'UTF-32';
-        $this->bomLength = 4;
-      }
-      elseif ($bom32 === 'fffe0000') {
-        // $this -> Encoding = 'UTF-32LE';
-        $this->encoding = 'UTF-32';
-        $this->bomLength = 4;
-      }
     }
 
     fseek($this->handle, 0);
