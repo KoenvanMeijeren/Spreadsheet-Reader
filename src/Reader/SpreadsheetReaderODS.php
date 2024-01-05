@@ -31,7 +31,7 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
   /**
    * Current active row.
    */
-  private mixed $currentRow = NULL;
+  private array $currentRow = [];
 
   /**
    * Number of the sheet we're currently reading.
@@ -72,10 +72,6 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
    * Constructs a new spreadsheet reader for ODS files.
    */
   public function __construct(string $filepath) {
-    if (!is_readable($filepath)) {
-      throw new \RuntimeException('File not readable (' . $filepath . ')');
-    }
-
     $temporaryDirectoryPath = sys_get_temp_dir();
     $temporaryDirectoryPath = rtrim($temporaryDirectoryPath, DIRECTORY_SEPARATOR);
     $temporaryDirectoryPath .= DIRECTORY_SEPARATOR . uniqid('', TRUE) . DIRECTORY_SEPARATOR;
@@ -115,7 +111,7 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
    */
   public function __destruct() {
     $this->content->close();
-    unset($this->content);
+    unset($this->content, $this->contentPath);
 
     foreach ($this->tempFiles as $tempFile) {
       if (!file_exists($tempFile)) {
@@ -127,11 +123,6 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
 
     if (file_exists($this->tempDir)) {
       rmdir($this->tempDir);
-    }
-
-    if (file_exists($this->contentPath)) {
-      unlink($this->contentPath);
-      unset($this->contentPath);
     }
   }
 
@@ -196,15 +187,15 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
     $this->isTableOpen = FALSE;
     $this->isRowOpen = FALSE;
 
-    $this->currentRow = NULL;
+    $this->currentRow = [];
     $this->currentRowIndex = 0;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function current(): mixed {
-    if ($this->currentRowIndex === 0 && $this->currentRow === NULL) {
+  public function current(): array {
+    if ($this->currentRowIndex === 0 && $this->currentRow === []) {
       $this->next();
       $this->currentRowIndex--;
     }

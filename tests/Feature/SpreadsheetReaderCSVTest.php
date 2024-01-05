@@ -69,6 +69,54 @@ it('can open a CSV file with only a header', function () {
   $this->assertSame($expectedHeaderRow, $reader->current());
 });
 
+it('can open an utf16LE encoded CSV file', function () {
+  // Arrange.
+  $filepath = get_mock_data_filepath('file_example_CSV_5000_utf16LE.csv');
+  $expectedHeaderRow = [
+    'Nr',
+    '䘀椀爀猀琀 一愀洀攀?',
+    '䰀愀猀琀 一愀洀攀?',
+    '䜀攀渀搀攀爀?',
+    '䌀漀甀渀琀爀礀?',
+    '䄀最攀?',
+    '䐀愀琀攀?',
+    '䤀搀?',
+  ];
+
+  // Act.
+  $reader = new SpreadsheetReader($filepath);
+
+  // Assert.
+  $this->assertCount(1, $reader->sheets());
+  $this->assertSame(1, $reader->count());
+  $this->assertSame(0, $reader->key());
+  $this->assertSame($expectedHeaderRow, $reader->current());
+});
+
+it('can open an utf16BE encoded CSV file', function () {
+  // Arrange.
+  $filepath = get_mock_data_filepath('file_example_CSV_5000_utf16BE.csv');
+  $expectedHeaderRow = [
+    '＀一爀',
+    'First Name?',
+    'Last Name?',
+    'Gender?',
+    'Country?',
+    'Age?',
+    'Date?',
+    'Id?',
+  ];
+
+  // Act.
+  $reader = new SpreadsheetReader($filepath);
+
+  // Assert.
+  $this->assertCount(1, $reader->sheets());
+  $this->assertSame(1, $reader->count());
+  $this->assertSame(0, $reader->key());
+  $this->assertSame($expectedHeaderRow, $reader->current());
+});
+
 it('can traverse through the CSV file', function () {
   // Arrange.
   $filepath = get_mock_data_filepath('file_example_CSV_5000.csv');
@@ -115,6 +163,7 @@ it('can traverse through the CSV file', function () {
   $this->assertFalse($reader->valid());
   $this->assertSame($expectedRowsCount, $reader->key());
   $this->assertSame(($expectedRowsCount + 1), $reader->count());
+  $this->assertSame([], $reader->current());
 });
 
 it('can rewind the reader', function () {
@@ -147,6 +196,31 @@ it('can rewind the reader', function () {
   $this->assertSame(4, $reader->count());
 
   $reader->rewind();
+  $this->assertSame(1, $reader->count());
+  $this->assertSame(0, $reader->key());
+  $this->assertSame($expectedHeaderRow, $reader->current());
+});
+
+it('can rewind the reader if the spreadsheet is not traversed yet', function () {
+  // Arrange.
+  $filepath = get_mock_data_filepath('file_example_CSV_5000.csv');
+  $expectedHeaderRow = [
+    'Nr',
+    'First Name',
+    'Last Name',
+    'Gender',
+    'Country',
+    'Age',
+    'Date',
+    'Id',
+  ];
+
+  // Act.
+  $reader = new SpreadsheetReader($filepath);
+  $reader->rewind();
+
+  // Assert.
+  $this->assertCount(1, $reader->sheets());
   $this->assertSame(1, $reader->count());
   $this->assertSame(0, $reader->key());
   $this->assertSame($expectedHeaderRow, $reader->current());

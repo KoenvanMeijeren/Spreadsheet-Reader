@@ -50,7 +50,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
   /**
    * Current row.
    */
-  private mixed $currentRow = NULL;
+  private array $currentRow = [];
 
   /**
    * Constructs a new spreadsheet reader for CSV files.
@@ -60,10 +60,6 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
   public function __construct(string $filepath, SpreadsheetReaderCSVConfig $config) {
     $this->filepath = $filepath;
     $this->config = $config;
-
-    if (!is_readable($filepath)) {
-      throw new FileNotReadableException($filepath);
-    }
 
     $handle = fopen($filepath, 'rb');
     if (!$handle) {
@@ -95,28 +91,11 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
     $bom16 = bin2hex((string) fread($this->handle, 2));
     if ($bom16 === 'fffe') {
       $this->encoding = 'UTF-16LE';
-      // $this -> Encoding = 'UTF-16';
       $this->bomLength = 2;
     }
     elseif ($bom16 === 'feff') {
       $this->encoding = 'UTF-16BE';
-      // $this -> Encoding = 'UTF-16';
       $this->bomLength = 2;
-    }
-
-    if (!$this->bomLength) {
-      fseek($this->handle, 0);
-      $bom32 = bin2hex((string) fread($this->handle, 4));
-      if ($bom32 === '0000feff') {
-        // $this -> Encoding = 'UTF-32BE';
-        $this->encoding = 'UTF-32';
-        $this->bomLength = 4;
-      }
-      elseif ($bom32 === 'fffe0000') {
-        // $this -> Encoding = 'UTF-32LE';
-        $this->encoding = 'UTF-32';
-        $this->bomLength = 4;
-      }
     }
 
     fseek($this->handle, 0);
@@ -185,7 +164,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
    */
   public function rewind(): void {
     fseek($this->handle, $this->bomLength);
-    $this->currentRow = NULL;
+    $this->currentRow = [];
     $this->currentRowIndex = 0;
   }
 
@@ -193,7 +172,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
    * {@inheritDoc}
    */
   public function current(): mixed {
-    if ($this->currentRowIndex === 0 && $this->currentRow === NULL) {
+    if ($this->currentRowIndex === 0 && $this->currentRow === []) {
       $this->next();
       $this->currentRowIndex--;
     }
@@ -208,7 +187,12 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
     $this->handleUtf16Encoding();
 
     $this->currentRowIndex++;
-    $this->currentRow = fgetcsv($this->handle, NULL, $this->config->delimiter, $this->config->enclosure);
+    $new_row = fgetcsv($this->handle, NULL, $this->config->delimiter, $this->config->enclosure);
+    if (!$new_row) {
+      $new_row = [];
+    }
+
+    $this->currentRow = $new_row;
 
     $this->convertAndTrimMultibyteStrings();
   }

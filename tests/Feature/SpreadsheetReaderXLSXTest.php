@@ -119,6 +119,7 @@ it('can traverse through the XLSX file', function () {
   $this->assertFalse($reader->valid());
   $this->assertSame($expectedRowIndex, $reader->key());
   $this->assertSame(($expectedRowIndex + 1), $reader->count());
+  $this->assertSame([], $reader->current());
 });
 
 it('can rewind the reader', function () {
@@ -151,6 +152,31 @@ it('can rewind the reader', function () {
   $this->assertSame(4, $reader->count());
 
   $reader->rewind();
+  $this->assertSame(1, $reader->count());
+  $this->assertSame(0, $reader->key());
+  $this->assertSame($expectedHeaderRow, $reader->current());
+});
+
+it('can rewind the reader if the spreadsheet is not traversed yet', function () {
+  // Arrange.
+  $filepath = get_mock_data_filepath('file_example_XLSX_5000.xlsx');
+  $expectedHeaderRow = [
+    '',
+    'First Name',
+    'Last Name',
+    'Gender',
+    'Country',
+    'Age',
+    'Date',
+    'Id',
+  ];
+
+  // Act.
+  $reader = new SpreadsheetReader($filepath);
+  $reader->rewind();
+
+  // Assert.
+  $this->assertCount(1, $reader->sheets());
   $this->assertSame(1, $reader->count());
   $this->assertSame(0, $reader->key());
   $this->assertSame($expectedHeaderRow, $reader->current());

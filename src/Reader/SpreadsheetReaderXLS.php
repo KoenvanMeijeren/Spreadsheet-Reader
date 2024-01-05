@@ -2,8 +2,6 @@
 
 namespace KoenVanMeijeren\SpreadsheetReader\Reader;
 
-use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
-
 /**
  * Spreadsheet reader for XLS files.
  *
@@ -19,7 +17,7 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
   /**
    * Current row index.
    */
-  private int $index = 0;
+  private int $currentRowIndex = 0;
 
   /**
    * Sheet information.
@@ -57,10 +55,6 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
    * Constructs a new object.
    */
   public function __construct(string $filepath) {
-    if (!is_readable($filepath)) {
-      throw new FileNotReadableException($filepath);
-    }
-
     $this->reader = new SpreadsheetExcelReader($filepath, FALSE, 'UTF-8');
     $this->reader->setUtfEncoder('mb');
 
@@ -122,14 +116,14 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
    * {@inheritdoc}
    */
   public function rewind(): void {
-    $this->index = 0;
+    $this->currentRowIndex = 0;
   }
 
   /**
    * {@inheritdoc}
    */
   public function current(): array {
-    if ($this->index === 0) {
+    if ($this->currentRowIndex === 0) {
       $this->next();
     }
 
@@ -142,10 +136,10 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
   public function next(): void {
     // Internal counter is advanced here instead of if because apparently
     // it's fully possible that an empty row will not be present at all.
-    $this->index++;
+    $this->currentRowIndex++;
 
-    if (isset($this->reader->sheets[$this->currentSheet]['cells'][$this->index])) {
-      $this->currentRow = $this->reader->sheets[$this->currentSheet]['cells'][$this->index];
+    if (isset($this->reader->sheets[$this->currentSheet]['cells'][$this->currentRowIndex])) {
+      $this->currentRow = $this->reader->sheets[$this->currentSheet]['cells'][$this->currentRowIndex];
       if (!$this->currentRow) {
         return;
       }
@@ -164,14 +158,14 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
    * {@inheritdoc}
    */
   public function key(): int {
-    return $this->index;
+    return $this->currentRowIndex;
   }
 
   /**
    * {@inheritdoc}
    */
   public function valid(): bool {
-    return $this->index <= $this->rowCount;
+    return $this->currentRowIndex <= $this->rowCount;
   }
 
   /**

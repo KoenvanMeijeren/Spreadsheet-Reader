@@ -76,11 +76,6 @@ final class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInt
       $fileType = $this->getFileTypeByExtension($fileExtension);
     }
 
-    // Pre-checking XLS files, in case they are renamed CSV or XLS  X files.
-    if ($fileType === SpreadsheetReaderFileType::XLS) {
-      $fileType = $this->checkXlsFileType($filepath);
-    }
-
     return $fileType;
   }
 
@@ -92,9 +87,7 @@ final class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInt
       'text/csv', 'text/comma-separated-values', 'text/plain' => SpreadsheetReaderFileType::CSV,
       'application/vnd.ms-excel', 'application/msexcel', 'application/x-msexcel',
       'application/x-ms-excel', 'application/x-excel', 'application/x-dos_ms_excel',
-      'application/xls', 'application/xlt', 'application/x-xls' => in_array($fileExtension, ['csv', 'tsv', 'txt'], TRUE)
-        ? SpreadsheetReaderFileType::CSV
-        : SpreadsheetReaderFileType::XLS,
+      'application/xls', 'application/xlt', 'application/x-xls' => SpreadsheetReaderFileType::XLS,
       'application/vnd.oasis.opendocument.spreadsheet',
       'application/vnd.oasis.opendocument.spreadsheet-template' => SpreadsheetReaderFileType::ODS,
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -115,29 +108,6 @@ final class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInt
       'csv' => SpreadsheetReaderFileType::CSV,
       default => SpreadsheetReaderFileType::UNSUPPORTED,
     };
-  }
-
-  /**
-   * Checks if the file is an XLS file.
-   */
-  private function checkXlsFileType(string $filepath): SpreadsheetReaderFileType {
-    $this->reader = new SpreadsheetReaderXLS($filepath);
-    if (!$this->reader->valid()) {
-      $this->reader->__destruct();
-
-      $zip = new \ZipArchive();
-      $zip_file = $zip->open($filepath);
-
-      $fileType = SpreadsheetReaderFileType::CSV;
-      if (is_resource($zip_file)) {
-        $fileType = SpreadsheetReaderFileType::XLSX;
-      }
-
-      $zip->close();
-      return $fileType;
-    }
-
-    return SpreadsheetReaderFileType::XLS;
   }
 
   /**
@@ -180,7 +150,7 @@ final class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInt
    * {@inheritdoc}
    */
   public function key(): int {
-    return $this->reader->key();
+    return (int) $this->reader->key();
   }
 
   /**
