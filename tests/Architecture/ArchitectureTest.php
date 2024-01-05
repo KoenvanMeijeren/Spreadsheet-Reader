@@ -13,7 +13,7 @@ arch('src')
 
 arch('exceptions')
   ->expect('KoenVanMeijeren\SpreadsheetReader\Exceptions')
-  ->toExtend(\Exception::class)
+  ->toExtend(\Throwable::class)
   ->toHaveSuffix('Exception');
 
 arch('readers')

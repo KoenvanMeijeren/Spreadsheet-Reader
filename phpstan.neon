@@ -208,7 +208,10 @@ parameters:
     - '#Cannot cast mixed to int.#'
     -
       message: '##'
-      path: src/Reader/SpreadsheetExcelReader.php
+      path: src/ExcelReader/SpreadsheetExcelReader.php
+    -
+      message: '#Call to an undefined method#'
+      path: tests/Architecture/*
     -
       message: '#Undefined variable: \$this#'
       path: tests/*
