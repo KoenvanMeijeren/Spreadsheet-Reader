@@ -18,6 +18,10 @@
             "Composer\\Config::disableProcessTimeout",
             "vendor/bin/pest --min=60 --parallel --coverage --coverage-html=coverage/ --strict-global-state --disallow-test-output --fail-on-incomplete --fail-on-skipped --fail-on-risky --fail-on-warning"
         ],
+        "pest:type-coverage": [
+            "Composer\\Config::disableProcessTimeout",
+            "vendor/bin/pest --min=100 --type-coverage"
+        ],
 		"pest:only-new": [
             "Composer\\Config::disableProcessTimeout",
             "./vendor/bin/pest --dirty"
@@ -69,7 +73,10 @@
 	"autoload": {
 		"psr-4": {
 			"KoenVanMeijeren\\SpreadsheetReader\\": "src"
-		}
+		},
+        "files": [
+            "src/Functions/functions.php"
+        ]
 	},
     "autoload-dev": {
         "psr-4": {
@@ -94,7 +101,8 @@
 		"ergebnis/phpstan-rules": "^2.1",
 		"phpmd/phpmd": "^2.15",
 		"phpbench/phpbench": "^1.2",
-		"shipmonk/phpstan-rules": "^2.11"
+		"shipmonk/phpstan-rules": "^2.11",
+		"pestphp/pest-plugin-type-coverage": "^2.6"
 	},
 	"config": {
 		"allow-plugins": {

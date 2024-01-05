@@ -2,6 +2,8 @@
 
 namespace KoenVanMeijeren\SpreadsheetReader\Reader;
 
+use KoenVanMeijeren\SpreadsheetReader\ExcelReader\SpreadsheetExcelReader;
+
 /**
  * Spreadsheet reader for XLS files.
  *
