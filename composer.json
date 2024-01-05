@@ -30,6 +30,10 @@
             "Composer\\Config::disableProcessTimeout",
             "./vendor/bin/pest --retry"
         ],
+        "pest:profile": [
+            "Composer\\Config::disableProcessTimeout",
+            "./vendor/bin/pest --profile"
+        ],
 		"phpcbf": "vendor/bin/phpcbf -p -s --report=code,summary",
 		"phpcs": "vendor/bin/phpcs -p -s --report=code,summary",
         "phpstan": [
