@@ -16,7 +16,7 @@
         ],
 		"pest:coverage": [
             "Composer\\Config::disableProcessTimeout",
-            "vendor/bin/pest --min=60 --parallel --coverage --coverage-html=coverage/ --strict-global-state --disallow-test-output --fail-on-incomplete --fail-on-skipped --fail-on-risky --fail-on-warning"
+            "vendor/bin/pest --min=69 --parallel --coverage --coverage-html=coverage/ --strict-global-state --disallow-test-output --fail-on-incomplete --fail-on-skipped --fail-on-risky --fail-on-warning"
         ],
         "pest:type-coverage": [
             "Composer\\Config::disableProcessTimeout",
