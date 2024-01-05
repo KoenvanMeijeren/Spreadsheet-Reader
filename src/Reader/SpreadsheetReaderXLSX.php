@@ -129,10 +129,6 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
    * @throws \KoenVanMeijeren\SpreadsheetReader\Exceptions\XMLSharedStringsNotReadableException
    */
   public function __construct(string $filepath) {
-    if (!is_readable($filepath)) {
-      throw new FileNotReadableException($filepath);
-    }
-
     $this->tempDir = sys_get_temp_dir();
     $this->tempDir = rtrim($this->tempDir, DIRECTORY_SEPARATOR);
     $this->tempDir .= DIRECTORY_SEPARATOR . uniqid('', TRUE) . DIRECTORY_SEPARATOR;
@@ -396,6 +392,11 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
    * {@inheritDoc}
    */
   public function rewind(): void {
+    if ($this->currentRowIndex < 1 && $this->isValid) {
+      $this->currentRowIndex = 0;
+      return;
+    }
+
     // Removed the check whether $this -> Index == 0 otherwise ChangeSheet
     // doesn't work properly. If the worksheet was already iterated, the XML
     // file is reopened. Otherwise, it should be at the beginning anyway.

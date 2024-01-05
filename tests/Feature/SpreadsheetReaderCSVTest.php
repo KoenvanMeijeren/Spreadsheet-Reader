@@ -163,6 +163,7 @@ it('can traverse through the CSV file', function () {
   $this->assertFalse($reader->valid());
   $this->assertSame($expectedRowsCount, $reader->key());
   $this->assertSame(($expectedRowsCount + 1), $reader->count());
+  $this->assertSame([], $reader->current());
 });
 
 it('can rewind the reader', function () {
@@ -195,6 +196,31 @@ it('can rewind the reader', function () {
   $this->assertSame(4, $reader->count());
 
   $reader->rewind();
+  $this->assertSame(1, $reader->count());
+  $this->assertSame(0, $reader->key());
+  $this->assertSame($expectedHeaderRow, $reader->current());
+});
+
+it('can rewind the reader if the spreadsheet is not traversed yet', function () {
+  // Arrange.
+  $filepath = get_mock_data_filepath('file_example_CSV_5000.csv');
+  $expectedHeaderRow = [
+    'Nr',
+    'First Name',
+    'Last Name',
+    'Gender',
+    'Country',
+    'Age',
+    'Date',
+    'Id',
+  ];
+
+  // Act.
+  $reader = new SpreadsheetReader($filepath);
+  $reader->rewind();
+
+  // Assert.
+  $this->assertCount(1, $reader->sheets());
   $this->assertSame(1, $reader->count());
   $this->assertSame(0, $reader->key());
   $this->assertSame($expectedHeaderRow, $reader->current());

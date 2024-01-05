@@ -50,7 +50,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
   /**
    * Current row.
    */
-  private mixed $currentRow = NULL;
+  private array $currentRow = [];
 
   /**
    * Constructs a new spreadsheet reader for CSV files.
@@ -60,10 +60,6 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
   public function __construct(string $filepath, SpreadsheetReaderCSVConfig $config) {
     $this->filepath = $filepath;
     $this->config = $config;
-
-    if (!is_readable($filepath)) {
-      throw new FileNotReadableException($filepath);
-    }
 
     $handle = fopen($filepath, 'rb');
     if (!$handle) {
@@ -168,7 +164,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
    */
   public function rewind(): void {
     fseek($this->handle, $this->bomLength);
-    $this->currentRow = NULL;
+    $this->currentRow = [];
     $this->currentRowIndex = 0;
   }
 
@@ -176,7 +172,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
    * {@inheritDoc}
    */
   public function current(): mixed {
-    if ($this->currentRowIndex === 0 && $this->currentRow === NULL) {
+    if ($this->currentRowIndex === 0 && $this->currentRow === []) {
       $this->next();
       $this->currentRowIndex--;
     }
@@ -191,7 +187,12 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
     $this->handleUtf16Encoding();
 
     $this->currentRowIndex++;
-    $this->currentRow = fgetcsv($this->handle, NULL, $this->config->delimiter, $this->config->enclosure);
+    $new_row = fgetcsv($this->handle, NULL, $this->config->delimiter, $this->config->enclosure);
+    if (!$new_row) {
+      $new_row = [];
+    }
+
+    $this->currentRow = $new_row;
 
     $this->convertAndTrimMultibyteStrings();
   }
