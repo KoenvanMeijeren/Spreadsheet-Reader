@@ -76,11 +76,6 @@ final class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInt
       $fileType = $this->getFileTypeByExtension($fileExtension);
     }
 
-    // Pre-checking XLS files, in case they are renamed CSV or XLS  X files.
-    if ($fileType === SpreadsheetReaderFileType::XLS) {
-      $fileType = $this->checkXlsFileType($filepath);
-    }
-
     return $fileType;
   }
 
@@ -115,29 +110,6 @@ final class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInt
       'csv' => SpreadsheetReaderFileType::CSV,
       default => SpreadsheetReaderFileType::UNSUPPORTED,
     };
-  }
-
-  /**
-   * Checks if the file is an XLS file.
-   */
-  private function checkXlsFileType(string $filepath): SpreadsheetReaderFileType {
-    $this->reader = new SpreadsheetReaderXLS($filepath);
-    if (!$this->reader->valid()) {
-      $this->reader->__destruct();
-
-      $zip = new \ZipArchive();
-      $zip_file = $zip->open($filepath);
-
-      $fileType = SpreadsheetReaderFileType::CSV;
-      if (is_resource($zip_file)) {
-        $fileType = SpreadsheetReaderFileType::XLSX;
-      }
-
-      $zip->close();
-      return $fileType;
-    }
-
-    return SpreadsheetReaderFileType::XLS;
   }
 
   /**
