@@ -259,28 +259,19 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
     }
 
     if (!$this->sharedStringCount || self::SHARED_STRING_CACHE_LIMIT < $this->sharedStringCount) {
+      $this->sharedStrings->close();
       return;
     }
 
     $cacheIndex = 0;
     $cacheValue = '';
     while ($this->sharedStrings->read()) {
-      switch ($this->sharedStrings->name) {
-        case 'si':
-          if ($this->sharedStrings->nodeType === \XMLReader::END_ELEMENT) {
-            $this->sharedStringCache[$cacheIndex] = $cacheValue;
-            $cacheIndex++;
-            $cacheValue = '';
-          }
-          break;
-
-        case 't':
-          if ($this->sharedStrings->nodeType === \XMLReader::END_ELEMENT) {
-            continue 2;
-          }
-
-          $cacheValue .= $this->sharedStrings->readString();
-          break;
+      if ($this->sharedStrings->nodeType === \XMLReader::END_ELEMENT && $this->sharedStrings->name === 'si') {
+        $this->sharedStringCache[$cacheIndex++] = $cacheValue;
+        $cacheValue = '';
+      }
+      elseif ($this->sharedStrings->name === 't' && $this->sharedStrings->nodeType !== \XMLReader::END_ELEMENT) {
+        $cacheValue .= $this->sharedStrings->readString();
       }
     }
 
@@ -289,6 +280,9 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
 
   /**
    * Retrieves a shared string value by its index.
+   *
+   * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+   * @SuppressWarnings(PHPMD.NPathComplexity)
    */
   private function getSharedString(int $index): string {
     if (!empty($this->sharedStringCache)) {
@@ -439,97 +433,118 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
     $this->currentRowIndex++;
     $this->currentRow = [];
 
+    // Reading the necessary row, if found.
+    $this->tryToOpenNextRow();
     if (!$this->isRowOpen) {
-      while ($this->isValid = $this->worksheet->read()) {
-        if ($this->worksheet->name === 'row') {
-          // Getting the row-spanning area (stored as e.g., 1:12)
-          // so that the last cells will be present, even if empty.
-          $rowSpans = $this->worksheet->getAttribute('spans');
-          $currentRowColumnCount = 0;
-          if ($rowSpans) {
-            $rowSpanParts = explode(':', $rowSpans);
-            $currentRowColumnCount = (int) ($rowSpanParts[1] ?? 0);
-          }
+      return;
+    }
 
-          if ($currentRowColumnCount > 0) {
-            $this->currentRow = array_fill(0, $currentRowColumnCount, '');
-          }
+    $this->readOpenRow();
+  }
 
-          $this->isRowOpen = TRUE;
+  /**
+   * Reads the closed row, if necessary.
+   */
+  private function tryToOpenNextRow(): void {
+    if ($this->isRowOpen) {
+      return;
+    }
+
+    while ($this->isValid = $this->worksheet->read()) {
+      if ($this->worksheet->name !== 'row') {
+        continue;
+      }
+
+      // Getting the row-spanning area (stored as e.g., 1:12)
+      // so that the last cells will be present, even if empty.
+      $rowSpans = $this->worksheet->getAttribute('spans');
+      $currentRowColumnCount = 0;
+      if ($rowSpans) {
+        $rowSpanParts = explode(':', $rowSpans);
+        $currentRowColumnCount = (int) ($rowSpanParts[1] ?? 0);
+      }
+
+      if ($currentRowColumnCount > 0) {
+        $this->currentRow = array_fill(0, $currentRowColumnCount, '');
+      }
+
+      $this->isRowOpen = TRUE;
+      break;
+    }
+  }
+
+  /**
+   * Reads the open row.
+   *
+   * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+   */
+  private function readOpenRow(): void {
+    // These two are needed to control for empty cells.
+    $maxIndex = 0;
+    $cellCount = 0;
+
+    $cellHasSharedString = FALSE;
+    $index = NULL;
+    while ($this->isValid = $this->worksheet->read()) {
+      switch ($this->worksheet->name) {
+        // Row end found.
+        case 'row':
+          if ($this->worksheet->nodeType === \XMLReader::END_ELEMENT) {
+            $this->isRowOpen = FALSE;
+            break 2;
+          }
           break;
-        }
+
+        // Cell.
+        case 'c':
+          // If it is a closing tag, skip it.
+          if ($this->worksheet->nodeType === \XMLReader::END_ELEMENT) {
+            continue 2;
+          }
+
+          // Get the index of the cell.
+          $cell_index = (string) $this->worksheet->getAttribute('r');
+          $letter = (string) preg_replace('{[^[:alpha:]]}S', '', $cell_index);
+          $index = self::indexFromColumnLetter($letter);
+
+          $cellHasSharedString = $this->worksheet->getAttribute('t') === self::CELL_TYPE_SHARED_STR;
+
+          $value = $this->worksheet->readString();
+
+          if ($cellHasSharedString) {
+            $value = $this->getSharedString((int) $value);
+          }
+
+          $this->currentRow[$index] = $value;
+
+          $cellCount++;
+          if ($index > $maxIndex) {
+            $maxIndex = $index;
+          }
+          break;
+
+        // Cell value.
+        case 'v':
+          if ($this->worksheet->nodeType === \XMLReader::END_ELEMENT || $index === NULL) {
+            continue 2;
+          }
+
+          $value = $this->worksheet->readString();
+
+          if ($cellHasSharedString) {
+            $value = $this->getSharedString((int) $value);
+          }
+
+          $this->currentRow[$index] = $value;
+          break;
       }
     }
 
-    // Reading the necessary row, if found.
-    if ($this->isRowOpen) {
-      // These two are needed to control for empty cells.
-      $maxIndex = 0;
-      $cellCount = 0;
-
-      $cellHasSharedString = FALSE;
-      $index = NULL;
-      while ($this->isValid = $this->worksheet->read()) {
-        switch ($this->worksheet->name) {
-          // Row end found.
-          case 'row':
-            if ($this->worksheet->nodeType === \XMLReader::END_ELEMENT) {
-              $this->isRowOpen = FALSE;
-              break 2;
-            }
-            break;
-
-          // Cell.
-          case 'c':
-            // If it is a closing tag, skip it.
-            if ($this->worksheet->nodeType === \XMLReader::END_ELEMENT) {
-              continue 2;
-            }
-
-            // Get the index of the cell.
-            $cell_index = (string) $this->worksheet->getAttribute('r');
-            $letter = (string) preg_replace('{[^[:alpha:]]}S', '', $cell_index);
-            $index = self::indexFromColumnLetter($letter);
-
-            $cellHasSharedString = $this->worksheet->getAttribute('t') === self::CELL_TYPE_SHARED_STR;
-
-            $value = $this->worksheet->readString();
-
-            if ($cellHasSharedString) {
-              $value = $this->getSharedString((int) $value);
-            }
-
-            $this->currentRow[$index] = $value;
-
-            $cellCount++;
-            if ($index > $maxIndex) {
-              $maxIndex = $index;
-            }
-            break;
-
-          // Cell value.
-          case 'v':
-            if ($this->worksheet->nodeType === \XMLReader::END_ELEMENT || $index === NULL) {
-              continue 2;
-            }
-
-            $value = $this->worksheet->readString();
-
-            if ($cellHasSharedString) {
-              $value = $this->getSharedString((int) $value);
-            }
-
-            $this->currentRow[$index] = $value;
-            break;
-        }
-      }
-
-      // Adding empty cells, if necessary,
-      // Only empty cells between and on the left side are added.
-      if (($maxIndex + 1) > $cellCount) {
-        $this->currentRow += array_fill(0, ($maxIndex + 1), '');
-        ksort($this->currentRow);
-      }
+    // Adding empty cells, if necessary,
+    // Only empty cells between and on the left side are added.
+    if (($maxIndex + 1) > $cellCount) {
+      $this->currentRow += array_fill(0, ($maxIndex + 1), '');
+      ksort($this->currentRow);
     }
   }
 

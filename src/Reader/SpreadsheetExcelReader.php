@@ -393,6 +393,9 @@ final class SpreadsheetExcelReader {
 
   /**
    * ADDED by Matt Kruse for better formatting.
+   *
+   * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+   * @SuppressWarnings(PHPMD.NPathComplexity)
    */
   private function formatValue(int|string|float $format, int|float $num, int|string|float $f): array {
     // 49==TEXT format
@@ -491,6 +494,9 @@ final class SpreadsheetExcelReader {
 
   /**
    * Parse a workbook.
+   *
+   * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+   * @SuppressWarnings(PHPMD.NPathComplexity)
    */
   private function parse(): bool {
     $pos = 0;
@@ -846,6 +852,9 @@ final class SpreadsheetExcelReader {
 
   /**
    * Parse a worksheet.
+   *
+   * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+   * @SuppressWarnings(PHPMD.NPathComplexity)
    */
   private function parseSheet(int $spos): int {
     $cont = TRUE;

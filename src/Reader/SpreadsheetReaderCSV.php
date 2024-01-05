@@ -59,12 +59,11 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
    */
   public function __construct(string $filepath, SpreadsheetReaderCSVConfig $config) {
     $this->filepath = $filepath;
+    $this->config = $config;
 
     if (!is_readable($filepath)) {
       throw new FileNotReadableException($filepath);
     }
-
-    $this->config = $config;
 
     $handle = fopen($filepath, 'rb');
     if (!$handle) {
@@ -74,6 +73,25 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
     $this->handle = $handle;
 
     // Checking the file for byte-order mark to determine encoding.
+    $this->determineFileEncoding();
+
+    // Seeking the place right after BOM as the start of the real content.
+    if ($this->bomLength) {
+      fseek($this->handle, $this->bomLength);
+    }
+
+    $is_empty = feof($this->handle) && (trim((string) fread($this->handle, 1)) === '');
+    if ($is_empty) {
+      throw new FileEmptyException($filepath);
+    }
+
+    $this->determineDelimiterIfNeeded();
+  }
+
+  /**
+   * Tries to determine the encoding of the file.
+   */
+  private function determineFileEncoding(): void {
     $bom16 = bin2hex((string) fread($this->handle, 2));
     if ($bom16 === 'fffe') {
       $this->encoding = 'UTF-16LE';
@@ -107,41 +125,37 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
       $this->encoding = 'UTF-8';
       $this->bomLength = 3;
     }
+  }
 
-    // Seeking the place right after BOM as the start of the real content.
-    if ($this->bomLength) {
-      fseek($this->handle, $this->bomLength);
+  /**
+   * Tries to determine the delimiter if it should be determined automatically.
+   */
+  private function determineDelimiterIfNeeded(): void {
+    if (!empty($this->config->delimiter)) {
+      return;
     }
 
-    $is_empty = feof($this->handle) && (trim((string) fread($this->handle, 1)) === '');
-    if ($is_empty) {
-      throw new FileEmptyException($filepath);
+    // Fgetcsv needs single-byte separators.
+    $semicolon = ';';
+    $tab = "\t";
+    $comma = ',';
+
+    // Reading the first row and checking if a specific separator character
+    // has more columns than others (it means that most likely that is the
+    // delimiter).
+    $semicolonCount = count((array) fgetcsv($this->handle, NULL, $semicolon));
+    fseek($this->handle, $this->bomLength);
+    $tabCount = count((array) fgetcsv($this->handle, NULL, $tab));
+    fseek($this->handle, $this->bomLength);
+    $commaCount = count((array) fgetcsv($this->handle, NULL, $comma));
+    fseek($this->handle, $this->bomLength);
+
+    $delimiter = $semicolon;
+    if ($tabCount > $semicolonCount || $commaCount > $semicolonCount) {
+      $delimiter = $commaCount > $tabCount ? $comma : $tab;
     }
 
-    // Checking for the delimiter if it should be determined automatically.
-    if (empty($this->config->delimiter)) {
-      // Fgetcsv needs single-byte separators.
-      $semicolon = ';';
-      $tab = "\t";
-      $comma = ',';
-
-      // Reading the first row and checking if a specific separator character
-      // has more columns than others (it means that most likely that is the
-      // delimiter).
-      $semicolonCount = count((array) fgetcsv($this->handle, NULL, $semicolon));
-      fseek($this->handle, $this->bomLength);
-      $tabCount = count((array) fgetcsv($this->handle, NULL, $tab));
-      fseek($this->handle, $this->bomLength);
-      $commaCount = count((array) fgetcsv($this->handle, NULL, $comma));
-      fseek($this->handle, $this->bomLength);
-
-      $delimiter = $semicolon;
-      if ($tabCount > $semicolonCount || $commaCount > $semicolonCount) {
-        $delimiter = $commaCount > $tabCount ? $comma : $tab;
-      }
-
-      $this->config->delimiter = $delimiter;
-    }
+    $this->config->delimiter = $delimiter;
   }
 
   /**
@@ -191,43 +205,65 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
    * {@inheritDoc}
    */
   public function next(): void {
-    // Finding the place the next line starts for UTF-16 encoded files.
-    // Line breaks could be 0x0D 0x00 0x0A 0x00 and PHP could split lines on the
-    // first or the second linebreak, leaving unnecessary \0 characters that
-    // mess up the output.
-    if ($this->encoding === 'UTF-16LE' || $this->encoding === 'UTF-16BE') {
-      while (!feof($this->handle)) {
-        // While bytes are insignificant whitespace, do nothing.
-        $character = ord((string) fgetc($this->handle));
-        if ($character === 10 || $character === 13) {
-          continue;
-        }
-
-        // If significant bytes are found, go back to the last place before it.
-        if ($this->encoding === 'UTF-16LE') {
-          fseek($this->handle, ((int) ftell($this->handle)) - 1);
-        }
-        else {
-          fseek($this->handle, ((int) ftell($this->handle)) - 2);
-        }
-
-        break;
-      }
-    }
+    $this->handleUtf16Encoding();
 
     $this->currentRowIndex++;
     $this->currentRow = fgetcsv($this->handle, NULL, $this->config->delimiter, $this->config->enclosure);
 
-    // Converting multibyte unicode strings and trimming enclosure symbols off
-    // of them because those aren't recognized in the relevant encodings.
-    if ($this->currentRow && $this->encoding !== 'ASCII' && $this->encoding !== 'UTF-8') {
-      foreach ($this->currentRow as $key => $value) {
-        $this->currentRow[$key] = trim(trim(
-          mb_convert_encoding((string) $value, 'UTF-8', $this->encoding),
-          $this->config->enclosure
-        ));
+    $this->convertAndTrimMultibyteStrings();
+  }
+
+  /**
+   * Handles UTF-16 encoding.
+   */
+  private function handleUtf16Encoding(): void {
+    if (!$this->isUtf16Encoding()) {
+      return;
+    }
+
+    while (!feof($this->handle)) {
+      $character = ord((string) fgetc($this->handle));
+
+      if ($character !== 10 && $character !== 13) {
+        fseek($this->handle, ((int) ftell($this->handle)) - ($this->encoding === 'UTF-16LE' ? 1 : 2));
+        break;
       }
     }
+  }
+
+  /**
+   * Checks if the encoding is UTF-16.
+   */
+  private function isUtf16Encoding(): bool {
+    return $this->encoding === 'UTF-16LE' || $this->encoding === 'UTF-16BE';
+  }
+
+  /**
+   * Converts and trims multibyte strings.
+   */
+  private function convertAndTrimMultibyteStrings(): void {
+    if ($this->currentRow && !$this->isUtf8OrAsciiEncoding()) {
+      foreach ($this->currentRow as $key => $value) {
+        $this->currentRow[$key] = $this->convertAndTrimValue($value);
+      }
+    }
+  }
+
+  /**
+   * Checks if the encoding is UTF-8 or ASCII.
+   */
+  private function isUtf8OrAsciiEncoding(): bool {
+    return $this->encoding === 'ASCII' || $this->encoding === 'UTF-8';
+  }
+
+  /**
+   * Converts and trims the value.
+   */
+  private function convertAndTrimValue(string $value): string {
+    return trim(trim(
+      mb_convert_encoding($value, 'UTF-8', $this->encoding),
+      $this->config->enclosure
+    ));
   }
 
   /**

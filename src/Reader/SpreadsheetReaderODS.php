@@ -219,75 +219,100 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
     $this->currentRowIndex++;
     $this->currentRow = [];
 
-    if (!$this->isTableOpen) {
-      $tableCounter = 0;
-      $shouldSkipRead = FALSE;
+    $this->tryToOpenTable();
+    $this->tryToOpenRow();
+    $this->tryToReadOpenRow();
+  }
 
-      while ($this->isValid = ($shouldSkipRead || $this->content->read())) {
-        if ($shouldSkipRead) {
-          $shouldSkipRead = FALSE;
-        }
-
-        if ($this->content->name === 'table:table' && $this->content->nodeType !== \XMLReader::END_ELEMENT) {
-          if ($tableCounter === $this->currentSheet) {
-            $this->isTableOpen = TRUE;
-            break;
-          }
-
-          $tableCounter++;
-          $this->content->next();
-          $shouldSkipRead = TRUE;
-        }
-      }
+  /**
+   * Try to open the table.
+   */
+  private function tryToOpenTable(): void {
+    if ($this->isTableOpen) {
+      return;
     }
 
-    if ($this->isTableOpen && !$this->isRowOpen) {
-      while ($this->isValid = $this->content->read()) {
-        switch ($this->content->name) {
-          case 'table:table':
-            $this->isTableOpen = FALSE;
-            $this->content->next('office:document-content');
-            $this->isValid = FALSE;
+    $tableCounter = 0;
+    $shouldSkipRead = FALSE;
+
+    while ($this->isValid = ($shouldSkipRead || $this->content->read())) {
+      if ($shouldSkipRead) {
+        $shouldSkipRead = FALSE;
+      }
+
+      if ($this->content->name === 'table:table' && $this->content->nodeType !== \XMLReader::END_ELEMENT) {
+        if ($tableCounter === $this->currentSheet) {
+          $this->isTableOpen = TRUE;
+          break;
+        }
+
+        $tableCounter++;
+        $this->content->next();
+        $shouldSkipRead = TRUE;
+      }
+    }
+  }
+
+  /**
+   * Try to open the row.
+   */
+  private function tryToOpenRow(): void {
+    if (!$this->isTableOpen || $this->isRowOpen) {
+      return;
+    }
+
+    while ($this->isValid = $this->content->read()) {
+      switch ($this->content->name) {
+        case 'table:table':
+          $this->isTableOpen = FALSE;
+          $this->content->next('office:document-content');
+          $this->isValid = FALSE;
+          break 2;
+
+        case 'table:table-row':
+          if ($this->content->nodeType !== \XMLReader::END_ELEMENT) {
+            $this->isRowOpen = TRUE;
             break 2;
-
-          case 'table:table-row':
-            if ($this->content->nodeType !== \XMLReader::END_ELEMENT) {
-              $this->isRowOpen = TRUE;
-              break 2;
-            }
-            break;
-        }
+          }
+          break;
       }
     }
+  }
 
-    if ($this->isRowOpen) {
-      $lastCellContent = '';
+  /**
+   * Try to read the open row.
+   */
+  private function tryToReadOpenRow(): void {
+    if (!$this->isRowOpen) {
+      return;
+    }
 
-      while ($this->isValid = $this->content->read()) {
-        switch ($this->content->name) {
-          case 'table:table-cell':
-            if ($this->content->nodeType === \XMLReader::END_ELEMENT || $this->content->isEmptyElement) {
-              if ($this->content->isEmptyElement) {
-                $lastCellContent = '';
-              }
+    $lastCellContent = '';
 
-              $this->currentRow[] = $lastCellContent;
-            }
-            else {
+    while ($this->isValid = $this->content->read()) {
+      switch ($this->content->name) {
+        case 'table:table-cell':
+          if ($this->content->nodeType === \XMLReader::END_ELEMENT || $this->content->isEmptyElement) {
+            if ($this->content->isEmptyElement) {
               $lastCellContent = '';
             }
-            break;
 
-          case 'text:p':
-            if ($this->content->nodeType !== \XMLReader::END_ELEMENT) {
-              $lastCellContent = $this->content->readString();
-            }
-            break;
+            $this->currentRow[] = $lastCellContent;
+          }
+          else {
+            $lastCellContent = '';
+          }
+          break;
 
-          case 'table:table-row':
-            $this->isRowOpen = FALSE;
-            break 2;
-        }
+        case 'text:p':
+          if ($this->content->nodeType !== \XMLReader::END_ELEMENT) {
+            $lastCellContent = $this->content->readString();
+          }
+          break;
+
+        case 'table:table-row':
+          $this->isRowOpen = FALSE;
+          break 2;
       }
     }
   }
