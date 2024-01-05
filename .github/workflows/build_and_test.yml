@@ -21,6 +21,8 @@ jobs:
       uses: shivammathur/setup-php@v2
       with:
         php-version: '8.3'
+        tools: composer:v2
+        coverage: xdebug
 
     - name: Validate composer.json and composer.lock
       run: composer validate --strict
@@ -47,7 +49,7 @@ jobs:
       run: composer run phpmd
 
     - name: Run pest tests
-      run: composer run pest
+      run: composer run pest:coverage
 
     - name: Run benchmark tests
       run: |

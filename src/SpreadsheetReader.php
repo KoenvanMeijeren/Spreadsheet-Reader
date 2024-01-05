@@ -134,8 +134,8 @@ final class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInt
   /**
    * {@inheritdoc}
    */
-  public function current(): mixed {
-    return $this->reader->current();
+  public function current(): array {
+    return (array) $this->reader->current();
 
   }
 
