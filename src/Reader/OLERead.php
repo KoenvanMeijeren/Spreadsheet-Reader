@@ -178,7 +178,7 @@ final class OLERead {
     $index = 0;
     $this->bigBlockChain = [];
 
-    foreach ($bigBlockDepotBlocks as $numBigBlockDepotBlocksIndex => $value) {
+    foreach ($bigBlockDepotBlocks as $value) {
       $pos = ($value + 1) * BIG_BLOCK_SIZE;
 
       for ($bigBlockSize = 0; $bigBlockSize < BIG_BLOCK_SIZE / 4; $bigBlockSize++) {
