@@ -2,8 +2,6 @@
 
 namespace KoenVanMeijeren\SpreadsheetReader\Reader;
 
-use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
-
 /**
  * Spreadsheet reader for XLS files.
  *
