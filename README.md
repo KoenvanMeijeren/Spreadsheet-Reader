@@ -9,7 +9,7 @@ data all at once and keeps it all in memory.
 
 ## Installation
 ```shell
-composer require koenvanmeijeren/spreadsheet-reader --ignore-platform-reqs
+composer require koenvanmeijeren/spreadsheet-reader
 ```
 
 ## Requirements:
