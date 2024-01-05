@@ -5,7 +5,7 @@ rules:
     - Spatie\Ray\PHPStan\RemainingRayCallRule
 
 parameters:
-  level: 8
+  level: 9
   featureToggles:
     notAnalysedTrait: true
     looseComparison: true
@@ -205,11 +205,12 @@ parameters:
     - '#Construct empty\(\) is not allowed. Use more strict comparison.#'
     - '#Using \(array\) is discouraged, please avoid using that.#'
     - '#Using return statement in constructor is forbidden to be able to check useless default values.#'
+    - '#Cannot cast mixed to int.#'
+    -
+      message: '##'
+      path: src/Reader/SpreadsheetExcelReader.php
     -
       message: '#Undefined variable: \$this#'
-      path: tests/*
-    -
-      message: '#is prohibited on unknown type \(\$this\)#'
       path: tests/*
     -
       message: '#Throwing checked exception#'

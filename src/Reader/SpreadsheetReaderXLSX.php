@@ -78,7 +78,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
   /**
    * The current row in the file.
    */
-  private mixed $currentRow = FALSE;
+  private array $currentRow = [];
 
   /**
    * Current row in the file.
@@ -103,7 +103,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
   /**
    * Value of the last shared string fetched.
    */
-  private mixed $lastSharedStringValue = NULL;
+  private ?string $lastSharedStringValue = NULL;
 
   /**
    * Whether the current row is open or not.
@@ -411,7 +411,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
 
     $this->isValid = TRUE;
     $this->isRowOpen = FALSE;
-    $this->currentRow = FALSE;
+    $this->currentRow = [];
     $this->currentRowIndex = 0;
   }
 
@@ -419,7 +419,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
    * {@inheritDoc}
    */
   public function current(): mixed {
-    if ($this->currentRowIndex === 0 && $this->currentRow === FALSE) {
+    if ($this->currentRowIndex === 0 && $this->currentRow === []) {
       $this->next();
       $this->currentRowIndex--;
     }

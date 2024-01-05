@@ -12,12 +12,12 @@ final class OLERead {
   /**
    * The data.
    */
-  public mixed $data = '';
+  public string $data = '';
 
   /**
    * The error.
    */
-  public int $error = 0;
+  public bool $hasError = FALSE;
 
   /**
    * The number of big block depot blocks.
@@ -82,13 +82,14 @@ final class OLERead {
       return FALSE;
     }
 
-    $this->data = file_get_contents($filename);
-    if (!$this->data) {
+    $file_contents = file_get_contents($filename);
+    if (!$file_contents) {
       return FALSE;
     }
 
-    if (!$this->isValidIdentifier()) {
-      $this->error = 1;
+    $this->data = $file_contents;
+    if (!$this->isValidData()) {
+      $this->hasError = TRUE;
       return FALSE;
     }
 
@@ -106,7 +107,7 @@ final class OLERead {
    */
   private function isValidFile(string $filename): bool {
     if (!is_readable($filename)) {
-      $this->error = 1;
+      $this->hasError = TRUE;
       return FALSE;
     }
 
@@ -116,9 +117,9 @@ final class OLERead {
   /**
    * Determines if the file is a valid OLE file.
    */
-  private function isValidIdentifier(): bool {
+  private function isValidData(): bool {
     if (!str_starts_with($this->data, IDENTIFIER_OLE)) {
-      $this->error = 1;
+      $this->hasError = TRUE;
       return FALSE;
     }
 
@@ -221,7 +222,7 @@ final class OLERead {
   /**
    * Read the data.
    */
-  public function readData(int $bl): string {
+  private function readData(int $bl): string {
     $block = $bl;
     $data = '';
     while ($block !== -2) {
@@ -235,7 +236,7 @@ final class OLERead {
   /**
    * Read the property sets.
    */
-  public function readPropertySets(): void {
+  private function readPropertySets(): void {
     $offset = 0;
     while ($offset < strlen($this->entry)) {
       $d = substr($this->entry, $offset, PROPERTY_STORAGE_BLOCK_SIZE);

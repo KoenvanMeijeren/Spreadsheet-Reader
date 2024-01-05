@@ -31,7 +31,7 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
   /**
    * Current active row.
    */
-  private mixed $currentRow = NULL;
+  private array $currentRow = [];
 
   /**
    * Number of the sheet we're currently reading.
@@ -187,15 +187,15 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
     $this->isTableOpen = FALSE;
     $this->isRowOpen = FALSE;
 
-    $this->currentRow = NULL;
+    $this->currentRow = [];
     $this->currentRowIndex = 0;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function current(): mixed {
-    if ($this->currentRowIndex === 0 && $this->currentRow === NULL) {
+  public function current(): array {
+    if ($this->currentRowIndex === 0 && $this->currentRow === []) {
       $this->next();
       $this->currentRowIndex--;
     }
