@@ -16,8 +16,8 @@ final class SpreadsheetReaderBench {
   /**
    * Executes the benchmark.
    */
-  #[Revs(50)]
-  #[Iterations(5)]
+  #[Revs(25)]
+  #[Iterations(2)]
   #[ParamProviders([
     "provideCsvMockFilePaths",
   ])]
@@ -46,8 +46,8 @@ final class SpreadsheetReaderBench {
   /**
    * Executes the benchmark.
    */
-  #[Revs(50)]
-  #[Iterations(5)]
+  #[Revs(25)]
+  #[Iterations(2)]
   #[ParamProviders([
     "provideXlsxMockFilePaths",
   ])]
@@ -76,8 +76,8 @@ final class SpreadsheetReaderBench {
   /**
    * Executes the benchmark.
    */
-  #[Revs(50)]
-  #[Iterations(5)]
+  #[Revs(25)]
+  #[Iterations(2)]
   #[ParamProviders([
     "provideXlsMockFilePaths",
   ])]
