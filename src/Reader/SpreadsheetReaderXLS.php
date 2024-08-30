@@ -2,6 +2,7 @@
 
 namespace KoenVanMeijeren\SpreadsheetReader\Reader;
 
+use KoenVanMeijeren\SpreadsheetReader\Config\SpreadsheetReaderXLSConfig;
 use KoenVanMeijeren\SpreadsheetReader\ExcelReader\SpreadsheetExcelReader;
 
 /**
@@ -57,7 +58,10 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
    * Constructs a new object.
    */
   public function __construct(string $filepath) {
-    $this->reader = new SpreadsheetExcelReader($filepath, FALSE, 'UTF-8');
+    $this->reader = new SpreadsheetExcelReader($filepath, new SpreadsheetReaderXLSConfig(
+      shouldStoreExtendedInfo: FALSE,
+      outputEncoding: 'UTF-8'
+    ));
     $this->reader->setUtfEncoder('mb');
 
     $this->changeSheet(0);
@@ -75,11 +79,10 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
    */
   public function sheets(): array {
     if ($this->sheets === []) {
-      $this->sheets = [];
       $this->sheetIndexes = array_keys($this->reader->sheets);
 
       foreach ($this->sheetIndexes as $sheetIndex) {
-        $this->sheets[] = $this->reader->boundSheets[$sheetIndex]['name'];
+        $this->sheets[] = (string) $this->reader->boundSheets[$sheetIndex]['name'];
       }
     }
 

@@ -17,7 +17,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
   /**
    * Cell type for shared strings.
    */
-  public const CELL_TYPE_SHARED_STR = 's';
+  public const string CELL_TYPE_SHARED_STR = 's';
 
   /**
    * Number of shared strings that can be reasonably cached.
@@ -28,7 +28,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
    * string caches, there are huge performance gains, however, a lot of memory
    * could be used which can be a problem, especially on shared hosting.
    */
-  public const SHARED_STRING_CACHE_LIMIT = 1048576;
+  public const int SHARED_STRING_CACHE_LIMIT = 1048576;
 
   /**
    * Whether the file is valid or not.
@@ -168,7 +168,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
     $this->prepareSharedStringCache();
 
     // Initializes the sheets.
-    $sheets = $this->sheets(); // phpcs:ignore
+    $this->sheets();
     foreach (array_keys($this->sheets) as $index) {
       if ($zip->locateName('xl/worksheets/sheet' . $index . '.xml') !== FALSE) {
         $zip->extractTo($this->tempDir, 'xl/worksheets/sheet' . $index . '.xml');
