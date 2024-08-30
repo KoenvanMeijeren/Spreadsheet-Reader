@@ -6,7 +6,8 @@
 
 it('returns correct integer for a given 4-byte string', function () {
   // Arrange.
-  $data = "\x01\x02\x03\x04"; // 67305985 in little-endian
+  // 67305985 in little-endian.
+  $data = "\x01\x02\x03\x04";
 
   // Act.
   $result = get_int4d($data, 0);
@@ -17,7 +18,8 @@ it('returns correct integer for a given 4-byte string', function () {
 
 it('returns correct integer for a different 4-byte string', function () {
   // Arrange.
-  $data = "\x00\x00\x00\x00"; // 0 in little-endian
+  // 0 in little-endian.
+  $data = "\x00\x00\x00\x00";
 
   // Act.
   $result = get_int4d($data, 0);
@@ -28,13 +30,15 @@ it('returns correct integer for a different 4-byte string', function () {
 
 it('handles large values correctly', function () {
   // Arrange.
-  $data = "\xFF\xFF\xFF\xFF"; // 4294967295 in little-endian
+  // 4294967295 in little-endian.
+  $data = "\xFF\xFF\xFF\xFF";
 
   // Act.
   $result = get_int4d($data, 0);
 
   // Assert.
-  $this->assertEquals(-2, $result); // Function treats values >= 4294967294 as -2
+  // Function treats values >= 4294967294 as -2.
+  $this->assertEquals(-2, $result);
 });
 
 it('returns correct array for current timestamp', function () {
@@ -51,7 +55,8 @@ it('returns correct array for current timestamp', function () {
 
 it('returns correct array for a specific timestamp', function () {
   // Arrange.
-  $timestamp = 1638382800; // Specific GMT timestamp
+  // Specific GMT timestamp.
+  $timestamp = 1638382800;
 
   // Act.
   $result = gm_get_date($timestamp);
@@ -66,13 +71,14 @@ it('returns correct array for a specific timestamp', function () {
 
 it('returns correct array for a float timestamp', function () {
   // Arrange.
-  $timestamp = 1638382800.123; // Specific GMT timestamp with milliseconds
+  // Specific GMT timestamp with milliseconds.
+  $timestamp = 1638382800.123;
 
   // Act.
   $result = gm_get_date($timestamp);
   $expected = array_combine(
     ['seconds', 'minutes', 'hours', 'mday', 'wday', 'mon', 'year', 'yday', 'weekday', 'month', 0],
-    explode(":", gmdate('s:i:G:j:w:n:Y:z:l:F:U', (int)$timestamp))
+    explode(":", gmdate('s:i:G:j:w:n:Y:z:l:F:U', (int) $timestamp))
   );
 
   // Assert.
@@ -81,7 +87,8 @@ it('returns correct array for a float timestamp', function () {
 
 it('returns correct integer for 2-byte string', function () {
   // Arrange.
-  $data = "\x01\x02"; // 513 in little-endian
+  // 513 in little-endian.
+  $data = "\x01\x02";
 
   // Act.
   $result = v($data, 0);
@@ -92,7 +99,8 @@ it('returns correct integer for 2-byte string', function () {
 
 it('returns correct integer for a different 2-byte string', function () {
   // Arrange.
-  $data = "\xFF\xFF"; // 65535 in little-endian
+  // 65535 in little-endian.
+  $data = "\xFF\xFF";
 
   // Act.
   $result = v($data, 0);
@@ -103,7 +111,8 @@ it('returns correct integer for a different 2-byte string', function () {
 
 it('returns correct integer for a 2-byte string at a different position', function () {
   // Arrange.
-  $data = "\x00\x00\x01\x02"; // 513 in little-endian from position 2
+  // 513 in little-endian from position 2.
+  $data = "\x00\x00\x01\x02";
 
   // Act.
   $result = v($data, 2);
