@@ -71,43 +71,12 @@ final class SpreadsheetReader implements \SeekableIterator, SpreadsheetReaderInt
     $originalFilename ??= $filepath;
     $fileExtension = strtolower(pathinfo($originalFilename, PATHINFO_EXTENSION));
 
-    $fileType = $this->getFileTypeByMimeType($mimeType, $fileExtension);
-    if (!$fileType) {
-      $fileType = $this->getFileTypeByExtension($fileExtension);
+    $fileType = SpreadsheetReaderFileType::tryFromMimeType($mimeType);
+    if ($fileType === SpreadsheetReaderFileType::UNSUPPORTED) {
+      $fileType = SpreadsheetReaderFileType::tryFromExtension($fileExtension);
     }
 
     return $fileType;
-  }
-
-  /**
-   * Gets the file type by mime type.
-   */
-  private function getFileTypeByMimeType(?string $mimeType, string $fileExtension): ?SpreadsheetReaderFileType {
-    return match ($mimeType) {
-      'text/csv', 'text/comma-separated-values', 'text/plain' => SpreadsheetReaderFileType::CSV,
-      'application/vnd.ms-excel', 'application/msexcel', 'application/x-msexcel',
-      'application/x-ms-excel', 'application/x-excel', 'application/x-dos_ms_excel',
-      'application/xls', 'application/xlt', 'application/x-xls' => SpreadsheetReaderFileType::XLS,
-      'application/vnd.oasis.opendocument.spreadsheet',
-      'application/vnd.oasis.opendocument.spreadsheet-template' => SpreadsheetReaderFileType::ODS,
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.template',
-      'application/xlsx', 'application/xltx' => SpreadsheetReaderFileType::XLSX,
-      default => NULL,
-    };
-  }
-
-  /**
-   * Gets the file type by extension.
-   */
-  private function getFileTypeByExtension(string $fileExtension): SpreadsheetReaderFileType {
-    return match ($fileExtension) {
-      'xlsx', 'xltx', 'xlsm', 'xltm' => SpreadsheetReaderFileType::XLSX,
-      'xls', 'xlt' => SpreadsheetReaderFileType::XLS,
-      'ods', 'odt' => SpreadsheetReaderFileType::ODS,
-      'csv' => SpreadsheetReaderFileType::CSV,
-      default => SpreadsheetReaderFileType::UNSUPPORTED,
-    };
   }
 
   /**
