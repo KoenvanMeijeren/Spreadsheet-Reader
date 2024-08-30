@@ -225,22 +225,23 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
 
     $tableCounter = 0;
     $shouldSkipRead = FALSE;
-
     while ($this->isValid = ($shouldSkipRead || $this->content->read())) {
       if ($shouldSkipRead) {
         $shouldSkipRead = FALSE;
       }
 
-      if ($this->content->name === 'table:table' && $this->content->nodeType !== \XMLReader::END_ELEMENT) {
-        if ($tableCounter === $this->currentSheet) {
-          $this->isTableOpen = TRUE;
-          break;
-        }
-
-        $tableCounter++;
-        $this->content->next();
-        $shouldSkipRead = TRUE;
+      if ($this->content->name !== 'table:table' || $this->content->nodeType === \XMLReader::END_ELEMENT) {
+        continue;
       }
+
+      if ($tableCounter === $this->currentSheet) {
+        $this->isTableOpen = TRUE;
+        break;
+      }
+
+      $tableCounter++;
+      $this->content->next();
+      $shouldSkipRead = TRUE;
     }
   }
 
@@ -289,10 +290,10 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
             }
 
             $this->currentRow[] = $lastCellContent;
+            break;
           }
-          else {
-            $lastCellContent = '';
-          }
+
+          $lastCellContent = '';
           break;
 
         case 'text:p':

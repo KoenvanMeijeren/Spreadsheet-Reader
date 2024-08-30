@@ -226,10 +226,12 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
    * Converts and trims multibyte strings.
    */
   private function convertAndTrimMultibyteStrings(): void {
-    if ($this->currentRow && !$this->isUtf8OrAsciiEncoding()) {
-      foreach ($this->currentRow as $key => $value) {
-        $this->currentRow[$key] = $this->convertAndTrimValue($value);
-      }
+    if (!$this->currentRow || $this->isUtf8OrAsciiEncoding()) {
+      return;
+    }
+
+    foreach ($this->currentRow as $key => $value) {
+      $this->currentRow[$key] = $this->convertAndTrimValue($value);
     }
   }
 
