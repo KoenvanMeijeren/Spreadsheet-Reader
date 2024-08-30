@@ -131,7 +131,7 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
    */
   public function sheets(): array {
     if ($this->sheets !== [] || !$this->isValid) {
-      return $this->sheets;
+      return array_values($this->sheets);
     }
 
     $sheetReader = \XMLReader::open($this->contentPath);

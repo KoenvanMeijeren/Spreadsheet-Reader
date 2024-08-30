@@ -79,15 +79,14 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
    */
   public function sheets(): array {
     if ($this->sheets === []) {
-      $this->sheets = [];
       $this->sheetIndexes = array_keys($this->reader->sheets);
 
       foreach ($this->sheetIndexes as $sheetIndex) {
-        $this->sheets[] = $this->reader->boundSheets[$sheetIndex]['name'];
+        $this->sheets[] = (string) $this->reader->boundSheets[$sheetIndex]['name'];
       }
     }
 
-    return $this->sheets;
+    return array_values($this->sheets);
   }
 
   /**
