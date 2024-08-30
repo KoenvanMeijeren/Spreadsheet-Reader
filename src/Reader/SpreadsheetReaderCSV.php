@@ -269,7 +269,7 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
    */
   public function count(): int {
     // @phpstan-ignore-next-line
-    return ($this->currentRowIndex + 1);
+    return $this->currentRowIndex + 1;
   }
 
 }
