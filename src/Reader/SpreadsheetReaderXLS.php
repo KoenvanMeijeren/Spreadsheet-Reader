@@ -83,7 +83,7 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
       }
     }
 
-    return array_values($this->sheets);
+    return $this->sheets;
   }
 
   /**
