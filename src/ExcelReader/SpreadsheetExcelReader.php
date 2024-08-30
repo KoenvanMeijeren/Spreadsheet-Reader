@@ -2,6 +2,7 @@
 
 namespace KoenVanMeijeren\SpreadsheetReader\ExcelReader;
 
+use KoenVanMeijeren\SpreadsheetReader\Config\SpreadsheetReaderXLSConfig;
 use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
 
 /**
@@ -283,12 +284,12 @@ final class SpreadsheetExcelReader {
   /**
    * Constructs a new instance.
    */
-  public function __construct(string $file = '', bool $shouldStoreExtendedInfo = TRUE, string $outputEncoding = '') {
+  public function __construct(string $file, SpreadsheetReaderXLSConfig $config) {
     $this->oleRead = new OLERead();
 
     $this->setUtfEncoder();
-    if ($outputEncoding !== '') {
-      $this->setOutputEncoding($outputEncoding);
+    if ($config->outputEncoding !== '') {
+      $this->setOutputEncoding($config->outputEncoding);
     }
 
     for ($index = 1; $index < 245; $index++) {
@@ -297,7 +298,7 @@ final class SpreadsheetExcelReader {
       $this->colIndexes[$index] = $name;
     }
 
-    $this->shouldStoreExtendedInfo = $shouldStoreExtendedInfo;
+    $this->shouldStoreExtendedInfo = $config->shouldStoreExtendedInfo;
     if ($file !== "") {
       $this->read($file);
     }
