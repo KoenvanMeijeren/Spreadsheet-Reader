@@ -87,8 +87,6 @@ parameters:
   shipmonkRules:
           allowComparingOnlyComparableTypes:
               enabled: false
-          allowNamedArgumentOnlyInAttributes:
-              enabled: false
           backedEnumGenerics:
               enabled: true
           classSuffixNaming:
@@ -110,33 +108,11 @@ parameters:
           forbidArithmeticOperationOnNonNumber:
               enabled: false
               allowNumericString: false
-          forbidAssignmentNotMatchingVarDoc:
-              enabled: true
-              allowNarrowing: false
           forbidCast:
               enabled: true
               blacklist: ['(object)', '(unset)']
           forbidCheckedExceptionInCallable:
               enabled: true
-              immediatelyCalledCallables:
-                  array_reduce: 1
-                  array_intersect_ukey: 2
-                  array_uintersect: 2
-                  array_uintersect_assoc: 2
-                  array_intersect_uassoc: 2
-                  array_uintersect_uassoc: [2, 3]
-                  array_diff_ukey: 2
-                  array_udiff: 2
-                  array_udiff_assoc: 2
-                  array_diff_uassoc: 2
-                  array_udiff_uassoc: [2, 3]
-                  array_filter: 1
-                  array_map: 0
-                  array_walk_recursive: 1
-                  array_walk: 1
-                  uasort: 1
-                  uksort: 1
-                  usort: 1
               allowedCheckedExceptionCallables: []
           forbidCheckedExceptionInYieldingMethod:
               enabled: true
@@ -199,9 +175,8 @@ parameters:
   customRulesetUsed: true
   reportUnmatchedIgnoredErrors: true
   ignoreErrors:
-    - '#Access to an undefined property XMLReader#'
     - '#Call to an undefined method Mockery#'
-    - '#Mockery\\LegacyMockInterface given.#'
+    - '#Mockery\\MockInterface given.#'
     - '#Construct empty\(\) is not allowed. Use more strict comparison.#'
     - '#Using \(array\) is discouraged, please avoid using that.#'
     - '#Using return statement in constructor is forbidden to be able to check useless default values.#'
@@ -211,7 +186,4 @@ parameters:
       path: tests/Architecture/*
     -
       message: '#Undefined variable: \$this#'
-      path: tests/*
-    -
-      message: '#Throwing checked exception#'
       path: tests/*

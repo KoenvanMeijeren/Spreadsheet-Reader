@@ -96,7 +96,7 @@ final class SpreadsheetReaderXLS implements SpreadsheetReaderInterface {
     }
 
     $this->rewind();
-    $this->currentSheet = $this->sheetIndexes[$index];
+    $this->currentSheet = (int) $this->sheetIndexes[$index];
 
     $columnCount = $this->reader->sheets[$this->currentSheet]['numCols'];
     $cells = $this->reader->sheets[$this->currentSheet]['cells'] ?? [];

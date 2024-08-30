@@ -141,14 +141,14 @@ final class SpreadsheetReaderODS implements SpreadsheetReaderInterface {
 
     while ($sheetReader->read()) {
       if ($sheetReader->name === 'table:table') {
-        $this->sheets[] = (string) ($sheetReader->getAttribute('table:name') ?? 'unknown');
+        $this->sheets[] = $sheetReader->getAttribute('table:name') ?? 'unknown';
         $sheetReader->next();
       }
     }
 
     $sheetReader->close();
 
-    return array_values($this->sheets);
+    return $this->sheets;
   }
 
   /**

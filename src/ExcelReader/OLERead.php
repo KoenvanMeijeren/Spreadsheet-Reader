@@ -207,7 +207,7 @@ final class OLERead {
         $index++;
       }
 
-      $sbdBlock = $this->bigBlockChain[$sbdBlock];
+      $sbdBlock = (int) $this->bigBlockChain[$sbdBlock];
     }
   }
 
@@ -228,7 +228,7 @@ final class OLERead {
     while ($block !== -2) {
       $pos = ($block + 1) * BIG_BLOCK_SIZE;
       $data .= substr($this->data, $pos, BIG_BLOCK_SIZE);
-      $block = $this->bigBlockChain[$block];
+      $block = (int) $this->bigBlockChain[$block];
     }
     return $data;
   }
@@ -273,11 +273,11 @@ final class OLERead {
     if ($this->props[$this->workbook]['size'] < SMALL_BLOCK_THRESHOLD) {
       $rootdata = $this->readData($this->props[$this->rootEntry]['startBlock']);
       $streamData = '';
-      $block = $this->props[$this->workbook]['startBlock'];
+      $block = (int) $this->props[$this->workbook]['startBlock'];
       while ($block !== -2) {
         $pos = $block * SMALL_BLOCK_SIZE;
         $streamData .= substr($rootdata, $pos, SMALL_BLOCK_SIZE);
-        $block = $this->smallBlockChain[$block];
+        $block = (int) $this->smallBlockChain[$block];
       }
       return $streamData;
     }
@@ -292,11 +292,11 @@ final class OLERead {
     }
 
     $streamData = '';
-    $block = $this->props[$this->workbook]['startBlock'];
+    $block = (int) $this->props[$this->workbook]['startBlock'];
     while ($block !== -2) {
       $pos = ($block + 1) * BIG_BLOCK_SIZE;
       $streamData .= substr($this->data, $pos, BIG_BLOCK_SIZE);
-      $block = $this->bigBlockChain[$block];
+      $block = (int) $this->bigBlockChain[$block];
     }
 
     return $streamData;
