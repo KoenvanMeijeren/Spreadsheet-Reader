@@ -168,7 +168,7 @@ final class SpreadsheetReaderXLSX implements SpreadsheetReaderInterface {
     $this->prepareSharedStringCache();
 
     // Initializes the sheets.
-    $sheets = $this->sheets(); // phpcs:ignore
+    $this->sheets();
     foreach (array_keys($this->sheets) as $index) {
       if ($zip->locateName('xl/worksheets/sheet' . $index . '.xml') !== FALSE) {
         $zip->extractTo($this->tempDir, 'xl/worksheets/sheet' . $index . '.xml');

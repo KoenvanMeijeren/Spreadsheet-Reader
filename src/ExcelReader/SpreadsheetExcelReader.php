@@ -134,11 +134,6 @@ final class SpreadsheetExcelReader {
   private array $formatRecords = [];
 
   /**
-   * The font records.
-   */
-  public array $fontRecords = [];
-
-  /**
    * The xf records.
    */
   private array $xfRecords = [];
@@ -438,7 +433,7 @@ final class SpreadsheetExcelReader {
    * @SuppressWarnings(PHPMD.CyclomaticComplexity)
    * @SuppressWarnings(PHPMD.NPathComplexity)
    */
-  private function parse(): bool {
+  private function parse(): void {
     $pos = 0;
     $data = $this->data;
 
@@ -448,11 +443,11 @@ final class SpreadsheetExcelReader {
 
     if (($version !== SPREADSHEET_EXCEL_READER_BIFF8) &&
     ($version !== SPREADSHEET_EXCEL_READER_BIFF7)) {
-      return FALSE;
+      return;
     }
 
     if ($substreamType !== SPREADSHEET_EXCEL_READER_WORKBOOKGLOBALS) {
-      return FALSE;
+      return;
     }
 
     $pos += $length + 4;
@@ -475,7 +470,7 @@ final class SpreadsheetExcelReader {
               $opcode = v($data, $spos);
               $conlength = v($data, $spos + 2);
               if ($opcode !== 0x3c) {
-                return FALSE;
+                return;
               }
               $spos += 4;
               $limitpos = $spos + $conlength;
@@ -509,7 +504,7 @@ final class SpreadsheetExcelReader {
               $spos += $len;
             }
             else {
-              // Found countinue.
+              // Found continue.
               // @phpstan-ignore-next-line
               $retstr = substr($data, $spos, $limitpos - $spos);
               $bytesRead = $limitpos - $spos;
@@ -520,7 +515,7 @@ final class SpreadsheetExcelReader {
                 $opcode = v($data, $spos);
                 $conlength = v($data, $spos + 2);
                 if ($opcode !== 0x3c) {
-                  return FALSE;
+                  return;
                 }
                 $spos += 4;
                 $limitpos = $spos + $conlength;
@@ -581,7 +576,7 @@ final class SpreadsheetExcelReader {
           break;
 
         case SPREADSHEET_EXCEL_READER_TYPE_FILEPASS:
-          return FALSE;
+          return;
 
         case SPREADSHEET_EXCEL_READER_TYPE_FONT:
         case SPREADSHEET_EXCEL_READER_TYPE_NAME:
@@ -762,7 +757,6 @@ final class SpreadsheetExcelReader {
       $this->parseSheet($val['offset']);
     }
 
-    return TRUE;
   }
 
   /**

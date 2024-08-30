@@ -16,11 +16,6 @@ use KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException;
 final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
 
   /**
-   * Options array, pre-populated with the default values.
-   */
-  private SpreadsheetReaderCSVConfig $config;
-
-  /**
    * Encoding of the file.
    */
   private string $encoding = 'UTF-8';
@@ -38,11 +33,6 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
   private mixed $handle;
 
   /**
-   * Path to file.
-   */
-  private string $filepath;
-
-  /**
    * Current row index.
    */
   private int $currentRowIndex = 0;
@@ -57,10 +47,10 @@ final class SpreadsheetReaderCSV implements SpreadsheetReaderInterface {
    *
    * @throws \KoenVanMeijeren\SpreadsheetReader\Exceptions\FileNotReadableException
    */
-  public function __construct(string $filepath, SpreadsheetReaderCSVConfig $config) {
-    $this->filepath = $filepath;
-    $this->config = $config;
-
+  public function __construct(
+    private readonly string $filepath,
+    private readonly SpreadsheetReaderCSVConfig $config,
+  ) {
     $handle = fopen($filepath, 'rb');
     if (!$handle) {
       throw new FileNotReadableException($filepath);
