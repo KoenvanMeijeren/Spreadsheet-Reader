@@ -62,6 +62,7 @@ parameters:
             - shell_exec
             - system
             - var_dump
+            - array_key_exists
 
         # enable detection of shell execution by backticks
         -

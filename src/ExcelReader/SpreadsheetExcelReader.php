@@ -693,14 +693,14 @@ final class SpreadsheetExcelReader {
           $xf['borderTopColor'] = ($border & 0x7F);
           $xf['borderBottomColor'] = ($border & 0x3F80) >> 7;
 
-          if (array_key_exists($indexCode, $this->dateFormats)) {
+          if (isset($this->dateFormats[$indexCode])) {
             $xf['type'] = 'date';
             $xf['format'] = $this->dateFormats[$indexCode];
             if ($align === '') {
               $xf['align'] = 'right';
             }
           }
-          elseif (array_key_exists($indexCode, $this->numberFormats)) {
+          elseif (isset($this->numberFormats[$indexCode])) {
             $xf['type'] = 'number';
             $xf['format'] = $this->numberFormats[$indexCode];
             if ($align === '') {
