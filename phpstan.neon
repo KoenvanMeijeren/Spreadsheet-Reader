@@ -12,8 +12,6 @@ parameters:
     disableCheckMissingIterableValueType: false
     varTagType: true
   checkDynamicProperties: true
-  checkMissingIterableValueType: false
-  checkGenericClassInNonGenericObjectType: false
   checkTooWideReturnTypesInProtectedAndPublicMethods: false
   checkAlwaysTrueInstanceof: true
   checkAlwaysTrueStrictComparison: true
@@ -188,3 +186,7 @@ parameters:
     -
       message: '#Undefined variable: \$this#'
       path: tests/*
+    -
+      identifier: missingType.generics
+    -
+      identifier: missingType.iterableValue
