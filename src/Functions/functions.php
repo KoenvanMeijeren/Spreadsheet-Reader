@@ -8,7 +8,7 @@
 /**
  * Gets the integer value of a 4-byte string.
  */
-function get_int4d(string $data, int $pos): int {
+function get_int4d(string $data, int|float $pos): int {
   $value = ord($data[$pos]) | (ord($data[$pos + 1]) << 8) | (ord($data[$pos + 2]) << 16) | (ord($data[$pos + 3]) << 24);
   if ($value >= 4294967294) {
     $value = -2;
