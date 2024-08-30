@@ -111,7 +111,7 @@ final class SpreadsheetExcelReader {
   /**
    * The default format.
    */
-  private const DEFAULT_FORMAT = SPREADSHEET_EXCEL_READER_DEF_NUM_FORMAT;
+  private const string DEFAULT_FORMAT = SPREADSHEET_EXCEL_READER_DEF_NUM_FORMAT;
 
   /**
    * MK: Added to make data retrieval easier.
